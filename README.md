@@ -1,40 +1,47 @@
-# DietNow - Asistent Inteligent de Nutritie si Monitorizare Calorica
+# DietNow 🥗
 
-Aplicație modernă pentru gestionarea stilului de viață sănătos, monitorizarea caloriilor și a greutății (bulk, cut, menținere) și recomandarea inteligentă de rețete asistată de Inteligență Artificială (AI Chat).
+> **Intelligent Nutrition, Calorie & Weight Tracker with an AI Recipe Assistant**
 
----
-
-## 📌 Documentație Proiect (Săptămânile 3-4)
-
-Documentația completă cerută pentru livrabilele din Săptămânile 3-4 este structurată în directorul `docs/`:
-
-- 📄 [Product Backlog Complet (docs/PRODUCT_BACKLOG.md)](docs/PRODUCT_BACKLOG.md)
-  - **Matricea Centralizată (Master Table)**: 22 User Stories organizate pe 6 Epics.
-  - **Detaliere User Stories**: Descrieri complete, criterii de acceptanță (Given-When-Then), sarcini tehnice.
-  - **MoSCoW & Story Points**: Estimare bazată pe Planning Poker (Fibonacci) și raport Valoare Business vs Complexitate.
-  - **Planificare pe Sprint-uri**: Împărțire strategică pe 4 Sprint-uri și cadență de viteză.
-  - **DoD & DoR**: Definiția calității pentru terminarea fiecărei funcționalități.
-- 📄 [Specificație de Cerințe și Arhitectură (docs/Specificatie_Cerinte_si_Backlog.md)](docs/Specificatie_Cerinte_si_Backlog.md)
-  - **Constituirea Echipei**: Roluri Scrum (PO, SM, Devs, QA) și convenții de lucru.
-  - **Alegerea Temei**: Descrierea proiectului, justificarea utilității și valoarea adăugată.
-  - **Requirements Document (SRS)**: Cerințe funcționale (RF) și non-funcționale (RNF), user personas, arhitectură de sistem.
-  - **Product Goal**: Obiectivul de produs clar definit pentru MVP.
+DietNow is a modern web and mobile application designed to simplify personal nutrition and help users reach their physique goals (bulking, cutting, or maintenance) through streamlined tracking and real-time AI recipe generation.
 
 ---
 
-## 🎯 Funcționalități Cheie
+## 💡 Project Concept
 
-1. **Onboarding & Profilare Biometrică:**
-   - Chestionar la înregistrare: sex, vârstă, înălțime, greutate actuală, nivel de activitate, obiectiv (bulk / cut / menținere), greutate țintă și orizont de timp.
-   - Calcul automat al BMR (Rata Metabolică Bazală), TDEE (Consumul Total Zilnic de Energie) și repartiția optimă a macronutrienților (Proteine / Carbohidrați / Grăsimi).
+DietNow removes the guesswork and decision fatigue around daily eating through two interconnected pillars:
 
-2. **Jurnal Nutrițional & Monitorizare Greutate:**
-   - Log zilnic structurat pe 4 mese: *Breakfast* (Mic dejun), *Lunch* (Prânz), *Dinner* (Cină), *Snacks* (Gustări).
-   - Urmărirea caloriilor și a macronutrienților consumați vs. ținta zilnică.
-   - Monitorizarea greutății corporale cu grafice de evoluție în timp.
-   - Selectarea unui plan nutrițional prestabilit (High-Protein, Echilibrat, Mediteranean, etc.).
+### 1. Guided Onboarding & Goal Calculation
+Users complete an initial profiling questionnaire covering:
+- **Biometrics:** Gender (male/female), age, height (cm), and current weight (kg).
+- **Activity Level:** Daily physical exertion and training frequency.
+- **Goal & Timeline:** Target weight (kg) for bulk/cut and the desired timeframe (weeks/months).
+- **Automated Engine:** Automatically computes BMR, TDEE, required daily caloric surplus/deficit, and optimal macronutrient distribution (protein, carbohydrates, fats).
 
-3. **Asistent Nutrițional AI (Conversational Chat):**
-   - Chatbot AI dedicat căruia utilizatorul îi poate specifica preferințele culinare, alergiile sau ingredientele disponibile.
-   - Generare de rețete personalizate, adaptate exact la macro-urile rămase pentru ziua respectivă.
-   - Sugestii inteligente de gustări și substituiri sănătoase de alimente.
+### 2. Core Feature 1: Calorie & Weight Tracking + Nutrition Plans
+- **4-Meal Daily Tracker:** Dedicated sections for **Breakfast**, **Lunch**, **Dinner**, and **Snacks**.
+- **Real-Time Dashboard:** Instant visual feedback of consumed vs. remaining calories and progress towards macro targets.
+- **Weight Progress:** Historical weigh-in log and trajectory toward the user's target weight.
+- **Structured Nutrition Plans:** Choose from pre-configured meal regimes (e.g., High-Protein Bulk, Balanced, Vegetarian, Low-Carb).
+
+### 3. Core Feature 2: Conversational AI Nutritionist (AI Chat)
+- **Natural Language Chat:** Ask anything about food, nutrition, or cravings.
+- **Fridge-to-Plate Recipe Generator:** Tell the AI what ingredients you have at home and what meal you want to make; the AI outputs a complete step-by-step recipe tailored to your remaining macros.
+- **Allergies & Preferences:** Strict compliance with user preferences (lactose-free, gluten-free, vegan, sweet vs. savory cravings).
+- **Save to Favorites:** Instant 1-click saving of generated recipes.
+
+---
+
+## 📋 Product Backlog
+
+The complete, official Product Backlog is documented in:
+👉 **[docs/PRODUCT_BACKLOG.md](docs/PRODUCT_BACKLOG.md)**
+
+It includes:
+- **Master Backlog Matrix:** Complete table of 21 User Stories with MoSCoW priorities, Story Point estimates (Fibonacci), and dependencies.
+- **Detailed User Stories:** Formatted in standard Agile format (*As a... / I want... / So that...*) with rigorous **Given-When-Then Acceptance Criteria** for each story.
+- **Epic Categorization:**
+  - `EPIC 1`: Onboarding & Biometric Profiling
+  - `EPIC 2`: Caloric Calculation & Nutrition Plans
+  - `EPIC 3`: Daily Tracking (4 Meals & Weight Progress)
+  - `EPIC 4`: Conversational AI Nutritionist (AI Chat)
+  - `EPIC 5`: Account Management & Enhancements

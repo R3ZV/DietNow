@@ -1,437 +1,351 @@
-# 📋 Product Backlog Complet – DietNow
-
-Acest document reprezintă **Product Backlog-ul oficial și complet** al proiectului **DietNow**, conceput conform standardelor metodologiei **Agile / Scrum**. Documentul conține descompunerea pe **Epic-uri**, descrierea granulară a fiecărui **User Story**, **Criteriile de Acceptanță (Given-When-Then)**, **Sarcinile Tehnice**, **Prioritizarea MoSCoW**, **Estimarea în Story Points (Planning Poker - Fibonacci)** și **Alocarea pe Sprint-uri**.
+# DietNow – Product Backlog & Project Specification
 
 ---
 
-## 🧭 1. Cadrul de Referință Agile
+## 💡 1. Project Concept & Idea
 
-### 1.1. Product Goal
-> *"Dezvoltarea și lansarea unui MVP web/mobile intuitiv (DietNow) care permite utilizatorilor să își configureze profilul biometric și obiectivul de greutate (bulk/cut/menținere), să monitorizeze aportul caloric zilnic pe 4 mese (Breakfast, Lunch, Dinner, Snacks), să urmărească evoluția greutății și să primească recomandări de rețete în timp real printr-un Asistent AI conversațional adaptat preferințelor culinare și ingredientelor disponibile."*
+**DietNow** is an intelligent nutrition and diet-tracking application designed to remove friction from meal planning and fitness goals. The app focuses on two core pillars: seamless macro/weight tracking and an interactive conversational AI that suggests recipes and meal ideas tailored to what you have and what you like.
 
-### 1.2. Definiția lui "Gata" (Definition of Done - DoD)
-O poveste de utilizator (User Story) este considerată **DONE** numai dacă:
-1. Codul sursă este scris conform standardelor de codare ale echipei și respectă arhitectura stabilită.
-2. Sunt îndeplinite toate Criteriile de Acceptanță (Acceptance Criteria).
-3. Codul este integrat pe ramura principală (`develop` / `main`) printr-un Pull Request validat de cel puțin un alt membru al echipei (Code Review).
-4. Testele unitare și de integrare relevante sunt scrise și trec cu succes.
-5. Interfața este testată și responsive pe cel puțin două rezoluții (Mobile & Desktop).
-6. Nu există erori critice sau blocante nerezolvate.
+### Initial Onboarding Questionnaire
+When a user joins the app, they complete a guided profiling flow:
+- **Biometrics:** Gender (female / male), age, height (cm), current weight (kg).
+- **Activity Level:** Sedentary, lightly active, moderately active, very active.
+- **Fitness Goal:** Bulking (muscle/weight gain), cutting (fat loss), or maintenance.
+- **Target Metrics:** Desired target weight (kg) and the timeframe/deadline to achieve the goal (e.g., 10 weeks, 3 months).
+- **Automated Calculation:** The system automatically calculates BMR (Basal Metabolic Rate), TDEE (Total Daily Energy Expenditure), the daily caloric surplus/deficit needed to reach the goal within the chosen timeframe, and the optimal macronutrient breakdown (protein, carbs, fats).
 
-### 1.3. Definiția lui "Pregătit" (Definition of Ready - DoR)
-O poveste de utilizator este considerată **READY** pentru a fi inclusă într-un Sprint dacă:
-1. Este clar exprimată în formatul standard (*Ca... / Doresc... / Astfel încât...*).
-2. Are criterii de acceptanță explicite (format *Given-When-Then*).
-3. Este estimată de echipă în Story Points.
-4. Dependențele tehnice sunt identificate și rezolvate.
-5. Respectă principiile **INVEST** (Independent, Negotiable, Valuable, Estimable, Small, Testable).
+### The Two Core Pillars
 
----
+#### Pillar 1: Weight & Calorie Tracking + Nutrition Plans
+- **4-Meal Daily Tracker:** Daily meal logging structured into 4 distinct categories:
+  1. **Breakfast**
+  2. **Lunch**
+  3. **Dinner**
+  4. **Snacks**
+- **Calorie & Macro Progress:** Real-time dashboard showing calories consumed vs. calories remaining, along with progress bars for protein, carbohydrate, and fat targets.
+- **Weight Tracking:** Periodic weight log tracking progress against the target weight over the specified timeframe.
+- **Nutrition Plans:** Ability to browse and select a structured diet plan (e.g., *High-Protein Bulk*, *Balanced Diet*, *Clean Vegetarian*, *Keto / Low-Carb*).
 
-## 📊 2. Matricea Centralizată a Product Backlog-ului (Master Table)
-
-Tabel pregătit pentru utilizare directă în documentație, Excel, Google Sheets sau import în Jira / GitHub Projects.
-
-| ID Story | Epic | Titlu User Story | Prioritate MoSCoW | Estimare (Story Points) | Valoare Business (1-10) | Complexitate Tehnică (1-10) | Sprint Alocat | Dependențe |
-| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **US-01** | Autentificare | Înregistrare cont și Login securizat (JWT) | **MUST** | **5 SP** | 9 | 5 | Sprint 1 | - |
-| **US-02** | Onboarding | Chestionar date biometrice (Sex, Înălțime, Greutate, Activitate) | **MUST** | **5 SP** | 10 | 4 | Sprint 1 | US-01 |
-| **US-03** | Onboarding | Definire obiectiv greutate bulk/cut și orizont de timp | **MUST** | **3 SP** | 10 | 3 | Sprint 1 | US-02 |
-| **US-04** | Calcul Metabolic | Algoritm calcul BMR, TDEE și necesar caloric zilnic | **MUST** | **3 SP** | 10 | 4 | Sprint 1 | US-02, US-03 |
-| **US-05** | Calcul Metabolic | Calcul și distribuție macronutrienți (Proteine, Carbo, Grăsimi) | **MUST** | **3 SP** | 9 | 3 | Sprint 1 | US-04 |
-| **US-06** | Tracking Mese | Structură jurnal zilnic pe 4 mese (Breakfast, Lunch, Dinner, Snacks) | **MUST** | **5 SP** | 10 | 5 | Sprint 2 | US-01, US-05 |
-| **US-07** | Tracking Mese | Bază de date alimente și căutare rapidă de produse | **MUST** | **5 SP** | 9 | 6 | Sprint 2 | US-06 |
-| **US-08** | Tracking Mese | Înregistrare porție (grame) și calcul instant nutrienți masă | **MUST** | **5 SP** | 9 | 5 | Sprint 2 | US-07 |
-| **US-09** | Dashboard | Dashboard progres zilnic (Calorii rămase și bare macronutrienți) | **MUST** | **5 SP** | 10 | 4 | Sprint 2 | US-06, US-08 |
-| **US-10** | Evoluție Greutate | Logare cântărire periodică și salvare istoric greutate | **MUST** | **3 SP** | 8 | 3 | Sprint 2 | US-01 |
-| **US-11** | Evoluție Greutate | Grafic vizual evoluție greutate vs. target de bulk/cut | **SHOULD** | **5 SP** | 8 | 5 | Sprint 2 | US-10, US-03 |
-| **US-12** | Planuri Alimentare | Vizualizare și selectare plan alimentar (High-Protein, Balanced, etc.) | **SHOULD** | **3 SP** | 7 | 3 | Sprint 3 | US-05 |
-| **US-13** | AI Nutrition Chat | Conectare API LLM și interfață de chat conversațional | **MUST** | **5 SP** | 9 | 6 | Sprint 3 | US-01 |
-| **US-14** | AI Nutrition Chat | Prompt contextualizat (AI conștient de sex, kg, bulk și calorii rămase) | **MUST** | **5 SP** | 9 | 6 | Sprint 3 | US-13, US-04, US-09 |
-| **US-15** | AI Nutrition Chat | Generare rețete pe baza ingredientelor disponibile în frigider | **MUST** | **8 SP** | 10 | 7 | Sprint 3 | US-14 |
-| **US-16** | AI Nutrition Chat | Salvare rețetă recomandată de AI în colecția de Favorite | **SHOULD** | **3 SP** | 8 | 3 | Sprint 3 | US-15 |
-| **US-17** | AI Nutrition Chat | Filtrare rețete AI după intoleranțe și preferințe (fără lactoză, vegan) | **SHOULD** | **3 SP** | 8 | 4 | Sprint 4 | US-15 |
-| **US-18** | Profil Utilizator | Modificare date profil (actualizare înălțime, nivel activitate, obiectiv nou) | **SHOULD** | **3 SP** | 7 | 3 | Sprint 4 | US-02, US-04 |
-| **US-19** | Tracking Mese | Adăugare aliment personalizat / rețetă proprie în baza de date | **SHOULD** | **5 SP** | 7 | 4 | Sprint 4 | US-07 |
-| **US-20** | Tracking Mese | Scanare cod de bare pentru căutare automată aliment | **COULD** | **8 SP** | 6 | 8 | Backlog Viitor | US-07 |
-| **US-21** | Raportare | Export PDF săptămânal cu sumarul evoluției nutriționale și a greutății | **COULD** | **5 SP** | 5 | 5 | Backlog Viitor | US-09, US-11 |
-| **US-22** | Dispozitive | Sincronizare automată date cu Apple Health / Google Fit | **WON'T** | **13 SP** | 4 | 9 | Versiunea 2.0 | US-10 |
+#### Pillar 2: Conversational AI Nutritionist (AI Chat)
+- **Natural Language Assistant:** A dedicated in-app chat where users can talk naturally about food, nutrition, and cravings.
+- **Custom Recipe Generator:** The user inputs what ingredients they have on hand (e.g., in their fridge/pantry) and what meal they need (breakfast, lunch, dinner, snack), and the AI produces a ready-to-cook recipe matching their exact remaining macros.
+- **Dietary Preferences & Intolerances:** Users can specify allergies and preferences (lactose-free, gluten-free, vegetarian, high-protein, sweet vs. savory cravings), which the AI strictly respects in every recommendation.
+- **Save to Favorites:** Instant 1-click option to save any generated recipe into the user's personal recipe book.
 
 ---
 
-## 🧩 3. Descrierea Detaliată a User Stories pe Epic-uri
+## 🎯 2. Product Goal
+
+> **Product Goal:**  
+> *"Deliver a functional MVP of DietNow that enables users to complete an onboarding questionnaire, calculate their personalized calorie and macro targets for bulking or cutting, track their daily meals across Breakfast, Lunch, Dinner, and Snacks, monitor weight progress, and receive instant, personalized recipe recommendations through an interactive AI chat assistant."*
 
 ---
 
-### EPIC 1: Autentificare, Onboarding & Profilare Biometrică
+## 📊 3. Master Product Backlog Matrix
 
-#### 🔹 US-01: Înregistrare și autentificare cont utilizator
-- **Format:** Ca utilizator nou, doresc să îmi pot crea un cont securizat cu email și parolă și să mă autentific, astfel încât datele mele biometrice și istoricul nutrițional să fie protejate și sincronizate.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 1
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Înregistrare cu date valide):**
-    - *Given:* Utilizatorul completează formularul de înregistrare cu un email valid și o parolă de minim 8 caractere (inclusiv o cifră);
-    - *When:* Apasă butonul „Creează Cont”;
-    - *Then:* Contul este creat în baza de date, parola este hash-uită (bcrypt), se emite un token JWT și este redirecționat către Onboarding.
-  - **Scenariul 2 (Email duplicat):**
-    - *Given:* Utilizatorul introduce o adresă de email deja existentă în sistem;
-    - *When:* Trimite formularul;
-    - *Then:* Sistemul afișează eroarea „Acest email este deja asociat unui cont existent” fără a expune alte date.
-- **Sarcini Tehnice:**
-  - Backend: Endpoint POST `/api/auth/register` și POST `/api/auth/login`.
-  - Backend: Middleware de verificare token JWT.
-  - Frontend: Ecrane Login și Register cu validare de formular (formik / react-hook-form + yup / zod).
-
----
-
-#### 🔹 US-02: Chestionar de colectare a datelor biometrice inițiale
-- **Format:** Ca utilizator nou autentificat, doresc să completez un chestionar intuitiv cu datele mele (sex biologic, vârstă, înălțime, greutate curentă, nivel de activitate), astfel încât sistemul să îmi cunoască profilul fizic de pornire.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 1
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Completare completă și corectă):**
-    - *Given:* Utilizatorul este la pasul 1 din Onboarding;
-    - *When:* Selectează sexul (Masc/Fem), introduce vârsta (ex: 21), înălțimea (ex: 182 cm), greutatea actuală (ex: 72.5 kg) și nivelul de activitate (ex: Moderat activ - 3-5 antrenamente/săpt.);
-    - *Then:* Câmpurile sunt validate ca valori pozitive reale, iar starea formularului avansează la pasul următor.
-  - **Scenariul 2 (Valori aberante sau lipsă):**
-    - *Given:* Utilizatorul introduce o înălțime de 30 cm sau lasă greutatea necompletată;
-    - *When:* Apasă „Continuă”;
-    - *Then:* Câmpul eronat este evidențiat în roșu cu mesajul „Vă rugăm introduceți o valoare realistă (între 120 și 250 cm)”.
-- **Sarcini Tehnice:**
-  - Frontend: Stepper interactiv de onboarding (responsive, card-uri mari pentru selecția sexului și activității).
-  - Backend: Salvare atribute biometrice în tabela `user_profiles`.
+| Story ID | Epic | User Story Title | MoSCoW Priority | Story Points | Target Milestone | Dependencies |
+| :---: | :--- | :--- | :---: | :---: | :---: | :--- |
+| **US-01** | Account | User Registration & Secure Authentication | **MUST** | **5 SP** | MVP | - |
+| **US-02** | Onboarding | Biometric Intake (Gender, Age, Height, Weight, Activity) | **MUST** | **5 SP** | MVP | US-01 |
+| **US-03** | Onboarding | Goal & Timeframe Definition (Target Weight & Weeks to Bulk) | **MUST** | **3 SP** | MVP | US-02 |
+| **US-04** | Calculation | Automated BMR, TDEE & Daily Calorie Target Engine | **MUST** | **3 SP** | MVP | US-02, US-03 |
+| **US-05** | Calculation | Macronutrient Split Breakdown (Protein, Carbs, Fats) | **MUST** | **3 SP** | MVP | US-04 |
+| **US-06** | Tracker | 4-Meal Daily Log (Breakfast, Lunch, Dinner, Snacks) | **MUST** | **5 SP** | MVP | US-01, US-05 |
+| **US-07** | Tracker | Food Search & Verified Nutrition Database | **MUST** | **5 SP** | MVP | US-06 |
+| **US-08** | Tracker | Portion Logging (Grams/Servings) & Meal Totals | **MUST** | **5 SP** | MVP | US-07 |
+| **US-09** | Tracker | Daily Dashboard (Remaining Calories & Macro Bars) | **MUST** | **5 SP** | MVP | US-06, US-08 |
+| **US-10** | Weight | Periodic Weight Log Entry | **MUST** | **3 SP** | MVP | US-01 |
+| **US-11** | Weight | Visual Weight Progress Chart vs. Bulk Target | **SHOULD** | **5 SP** | MVP | US-10, US-03 |
+| **US-12** | Plans | Nutrition Plan Selection (High-Protein Bulk, Balanced, etc.) | **SHOULD** | **3 SP** | MVP | US-05 |
+| **US-13** | AI Chat | Conversational AI Chat Interface & Integration | **MUST** | **5 SP** | MVP | US-01 |
+| **US-14** | AI Chat | Context-Aware AI (Aware of User Bulk Goal & Remaining Calories) | **MUST** | **5 SP** | MVP | US-13, US-04, US-09 |
+| **US-15** | AI Chat | Recipe Recommendation Based on Available Fridge Ingredients | **MUST** | **8 SP** | MVP | US-14 |
+| **US-16** | AI Chat | Save Generated AI Recipes to Favorites Collection | **SHOULD** | **3 SP** | MVP | US-15 |
+| **US-17** | AI Chat | Dietary Preferences & Intolerance Filters (Lactose, Gluten, Vegan) | **SHOULD** | **3 SP** | Post-MVP | US-15 |
+| **US-18** | Account | Profile Settings & Goal/Metric Recalibration | **SHOULD** | **3 SP** | Post-MVP | US-02, US-04 |
+| **US-19** | Tracker | Custom Food / Homemade Meal Creation | **SHOULD** | **5 SP** | Post-MVP | US-07 |
+| **US-20** | Tracker | Barcode Scanner for Fast Food Lookup | **COULD** | **8 SP** | Future | US-07 |
+| **US-21** | Reports | Weekly Progress PDF Export | **COULD** | **5 SP** | Future | US-09, US-11 |
 
 ---
 
-#### 🔹 US-03: Definirea obiectivului de greutate (Bulk / Cut / Menținere) și a termenului
-- **Format:** Ca utilizator, doresc să aleg dacă obiectivul meu este creștere în greutate (bulk), scădere (cut) sau menținere, să specific greutatea țintă și numărul de săptămâni/luni dorit, astfel încât aplicația să personalizeze ritmul progresului.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **3 SP** | **Sprint:** 1
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Configurare obiectiv de Bulk sănătos):**
-    - *Given:* Utilizatorul are 70 kg și selectează obiectivul „Creștere masă (Bulk)”;
-    - *When:* Introduce greutatea țintă 76 kg și orizontul de 12 săptămâni;
-    - *Then:* Sistemul validează că rata de creștere este rezonabilă (~0.5 kg / săptămână) și confirmă configurarea obiectivului.
-  - **Scenariul 2 (Avertizare pentru ritm nerealist/periculos):**
-    - *Given:* Utilizatorul cere să pună 15 kg în 2 săptămâni;
-    - *When:* Apasă confirmare;
-    - *Then:* Sistemul afișează un avertisment prietenos: „Un ritm mai sustenabil recomandat este între 0.25 și 0.5 kg pe săptămână pentru a maximiza masa musculară și a limita acumularea de grăsime”.
-- **Sarcini Tehnice:**
-  - Frontend: Slider interactiv pentru greutate țintă și săptămâni.
-  - Backend: Câmpuri `goal_type`, `target_weight`, `target_timeline_weeks` în baza de date.
+## 📝 4. Detailed Backlog Items & Acceptance Criteria
 
 ---
 
-### EPIC 2: Calcul Metabolic & Planuri de Alimentație
+### EPIC 1: Onboarding & Biometric Profiling
 
-#### 🔹 US-04: Algoritm automat pentru BMR, TDEE și target caloric zilnic
-- **Format:** Ca utilizator, doresc ca aplicația să calculeze automat Rata Metabolică Bazală (BMR) și Consumul Total Zilnic (TDEE) și să aplice surplusul de bulk sau deficitul de cut, astfel încât să știu exact câte calorii trebuie să consum în fiecare zi.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **3 SP** | **Sprint:** 1
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Calcul precis pe baza formulei Mifflin-St Jeor):**
-    - *Given:* Bărbat, 70 kg, 180 cm, 22 ani:
-      $BMR = (10 \times 70) + (6.25 \times 180) - (5 \times 22) + 5 = 700 + 1125 - 110 + 5 = 1720\text{ kcal}$;
-    - *When:* Nivelul este „Moderat activ” (multiplicator 1.55), $TDEE = 1720 \times 1.55 \approx 2666\text{ kcal}$;
-    - *Then:* Pentru un obiectiv de bulk moderat, sistemul adaugă un surplus de +400 kcal, stabilind targetul zilnic la $3066\text{ kcal/zi}$.
-- **Sarcini Tehnice:**
-  - Backend: Modul matematic `nutritionCalculator.ts` / `calculator.py`.
-  - Testare: Teste unitare cu valori etalon pentru diverse combinații de sex, înălțime și activitate.
-
----
-
-#### 🔹 US-05: Calculul și repartiția optimă a macronutrienților
-- **Format:** Ca utilizator orientat pe fitness/bulk, doresc să primesc o repartiție clară a caloriilor în grame de Proteine, Carbohidrați și Grăsimi, astfel încât să îmi optimizez sinteza musculară și energia la antrenamente.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **3 SP** | **Sprint:** 1
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Repartiție Bulk High-Protein):**
-    - *Given:* Utilizatorul are setat obiectivul de bulk;
-    - *When:* Sistemul generează macro-urile;
-    - *Then:* Alocă:
-      - Proteine: $2.0\text{ g/kg corp}$ (4 kcal/g);
-      - Grăsimi: $1.0\text{ g/kg corp}$ (9 kcal/g);
-      - Carbohidrați: restul de calorii rămase împărțite la 4 kcal/g.
-- **Sarcini Tehnice:**
-  - Backend: Generare obiect JSON `{ daily_calories: 3050, protein_g: 140, carbs_g: 450, fats_g: 75 }`.
-  - Frontend: Grafic circular sau bare colorate pentru raportul de macro-uri.
+#### US-01: User Registration & Secure Authentication
+- **User Story:** As a new user, I want to create an account with email and password and securely log in, so that my personal metrics, meal history, and favorite recipes remain private and persistent.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Successful Registration):**
+    - *Given:* A new visitor provides a valid email address and a password of at least 8 characters.
+    - *When:* They submit the registration form.
+    - *Then:* An encrypted user record is created, a secure session/JWT token is issued, and the user is redirected to the onboarding wizard.
+  - **Scenario 2 (Duplicate Account):**
+    - *Given:* A user attempts to sign up with an existing email address.
+    - *When:* They submit the form.
+    - *Then:* The system rejects the request and displays: *"An account with this email already exists."*
 
 ---
 
-#### 🔹 US-12: Vizualizarea și selectarea planului de alimentație
-- **Format:** Ca utilizator, doresc să pot alege dintr-o listă de planuri alimentare (ex: High-Protein Bulk, Balanced Diet, Vegetarian / Vegan, Low-Carb), astfel încât repartiția caloriilor și recomandările de rețete să se plieze pe stilul meu de viață.
-- **Prioritate:** **SHOULD HAVE** | **Estimare:** **3 SP** | **Sprint:** 3
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Alegerea unui plan Vegetarian):**
-    - *Given:* Utilizatorul accesează secțiunea „Planuri de Alimentație”;
-    - *When:* Selectează planul „Vegetarian High-Protein”;
-    - *Then:* Sursele proteice prioritizate în aplicație și recomandările din AI Chat devin vegetariene (tofu, soia, ouă, linte, brânză).
-- **Sarcini Tehnice:**
-  - Frontend: Pagina de selecție cu carduri informative pentru fiecare tip de plan.
-  - Backend: Actualizare proprietate `diet_plan` în profilul utilizatorului.
+#### US-02: Biometric Onboarding Questionnaire
+- **User Story:** As a newly registered user, I want to complete an intuitive onboarding survey entering my gender, age, height, current weight, and activity level, so that the app understands my baseline physical condition.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Valid Input Submission):**
+    - *Given:* The user is on the onboarding screen.
+    - *When:* They select gender (Male/Female), enter height (e.g., 180 cm), current weight (e.g., 72.0 kg), age (e.g., 22), and select activity level (e.g., Moderately Active).
+    - *Then:* The values are validated as within realistic biological ranges and stored in the user profile table.
+  - **Scenario 2 (Invalid/Missing Values):**
+    - *Given:* The user leaves the weight input empty or enters an impossible value (e.g., -5 or 600 kg).
+    - *When:* They attempt to proceed.
+    - *Then:* The offending field is highlighted with a descriptive error message and navigation is prevented.
 
 ---
 
-### EPIC 3: Monitorizare Nutrițională & Jurnal Zilnic pe 4 Mese
-
-#### 🔹 US-06: Structură jurnal zilnic organizat pe 4 mese distincte
-- **Format:** Ca utilizator, doresc ca jurnalul meu alimentar zilnic să fie structurat clar pe cele 4 mese: **Breakfast** (Mic dejun), **Lunch** (Prânz), **Dinner** (Cină) și **Snacks** (Gustări), astfel încât să îmi pot organiza consumul alimentar pe tot parcursul zilei.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 2
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Afișarea celor 4 secțiuni):**
-    - *Given:* Utilizatorul deschide pagina principală de jurnal pentru data curentă;
-    - *When:* Pagina este randată;
-    - *Then:* Sunt vizibile cele 4 secțiuni separate, fiecare afișând subtotalul de calorii și un buton „+ Adaugă Aliment”.
-  - **Scenariul 2 (Navigare între zile):**
-    - *Given:* Utilizatorul dorește să vadă ce a mâncat ieri;
-    - *When:* Folosește selectorul de dată (săgeată stânga / calendar);
-    - *Then:* Jurnalul se reîncarcă cu datele aferente zilei selectate.
-- **Sarcini Tehnice:**
-  - Frontend: Componentă reutilizabilă `MealSectionCard` pentru fiecare categorie de masă.
-  - Backend: Endpoint GET `/api/logs/daily?date=YYYY-MM-DD`.
+#### US-03: Goal Setting & Target Bulk Timeframe
+- **User Story:** As a user aiming to change my physique, I want to declare my objective (bulk, cut, or maintain), my target weight, and the timeframe (in weeks or months), so that the application can calculate a safe and realistic rate of weight change.
+- **Priority:** **MUST HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Healthy Bulk Goal):**
+    - *Given:* A user currently at 70 kg sets an objective to bulk to 76 kg over 12 weeks.
+    - *When:* They submit the goal.
+    - *Then:* The system calculates the weekly surplus (~0.5 kg/week) and confirms the program parameters.
+  - **Scenario 2 (Unrealistic Pace Warning):**
+    - *Given:* A user attempts to configure a 15 kg weight increase within 2 weeks.
+    - *When:* They submit the target.
+    - *Then:* The system displays a wellness warning recommending an evidence-based pace of 0.25 to 0.5 kg per week for clean lean mass accrual.
 
 ---
 
-#### 🔹 US-07: Bază de date de alimente și căutare rapidă
-- **Format:** Ca utilizator, doresc să caut rapid un aliment după nume dintr-o bază de date cu valori nutriționale verificate, astfel încât să îl găsesc în câteva secunde.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 2
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Căutare după cuvânt cheie):**
-    - *Given:* Utilizatorul tastează „piept de pui” în bara de căutare;
-    - *When:* Tastează cel puțin 2 caractere;
-    - *Then:* Sistemul afișează o listă de rezultate cu denumirea și caloriile/macro-urile per 100g.
-- **Sarcini Tehnice:**
-  - Bază de date: Tabela `foods` populată inițial cu alimente comune (surse verified nutrition / USDA / Open Food Facts).
-  - Backend: Endpoint GET `/api/foods/search?q=query` cu indexare full-text.
+### EPIC 2: Caloric Calculation & Nutrition Plans
+
+#### US-04: Automated BMR, TDEE & Daily Calorie Engine
+- **User Story:** As a user who completed the questionnaire, I want the system to automatically compute my BMR and TDEE, applying the appropriate caloric surplus for my bulk, so that I have a scientifically calculated daily caloric target.
+- **Priority:** **MUST HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Mifflin-St Jeor Calculation):**
+    - *Given:* A male user, 72 kg, 182 cm, 21 years old, moderately active ($1.55$ multiplier).
+    - *When:* The engine processes the profile data.
+    - *Then:* $BMR = (10 \times 72) + (6.25 \times 182) - (5 \times 21) + 5 = 1752.5\text{ kcal}$, $TDEE = 1752.5 \times 1.55 \approx 2716\text{ kcal}$. For a moderate bulk, a surplus of $+350\text{ kcal}$ sets the daily target to $\approx 3066\text{ kcal}$.
 
 ---
 
-#### 🔹 US-08: Înregistrarea cantității consumate și calculul instant
-- **Format:** Ca utilizator, doresc să specific cantitatea consumată (în grame sau porții) pentru un aliment selectat, astfel încât sistemul să calculeze instant caloriile, proteinele, carbohidrații și grăsimile aferente.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 2
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Adăugare 150g orez fiert la Lunch):**
-    - *Given:* Utilizatorul a selectat „Orez fiert” (130 kcal/100g);
-    - *When:* Introduce cantitatea de „150” grame și confirmă;
-    - *Then:* Masa de Prânz este creditată cu 195 kcal, iar alimentul apare listat sub „Lunch”.
-  - **Scenariul 2 (Ștergere aliment înregistrat greșit):**
-    - *Given:* Un aliment adăugat din greșeală;
-    - *When:* Utilizatorul apasă iconița de ștergere;
-    - *Then:* Elementul dispare, iar totalurile sunt scăzute instant.
-- **Sarcini Tehnice:**
-  - Backend: Endpoint POST `/api/logs/meal-item` și DELETE `/api/logs/meal-item/:id`.
-  - Frontend: Modal de introducere grame cu recalculare live în UI înainte de submit.
+#### US-05: Macronutrient Split Distribution
+- **User Story:** As a fitness-oriented user, I want my daily calories translated into specific gram targets for Protein, Carbohydrates, and Fats, so that I can optimize muscle recovery and daily energy.
+- **Priority:** **MUST HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Bulk Macro Allocation):**
+    - *Given:* The user has a bulk target of 3050 kcal and weighs 72 kg.
+    - *When:* The macro calculator executes.
+    - *Then:* It allocates:
+      - Protein: $2.0\text{ g/kg} \rightarrow 144\text{ g}$ ($576\text{ kcal}$);
+      - Fats: $1.0\text{ g/kg} \rightarrow 72\text{ g}$ ($648\text{ kcal}$);
+      - Carbohydrates: Remainder ($\approx 1826\text{ kcal} \div 4 \approx 456\text{ g}$).
 
 ---
 
-#### 🔹 US-09: Dashboard central de progres nutrițional
-- **Format:** Ca utilizator, doresc ca ecranul principal să îmi afișeze un sumar vizual atractiv (Calorii consumate vs. Rămase și 3 bare de progres pentru Proteine, Carbohidrați, Grăsimi), astfel încât să văd dintr-o privire dacă mai am "spațiu" pentru cină sau gustări.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 2
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Actualizare dinamică a caloriilor rămase):**
-    - *Given:* Targetul este de 3000 kcal, iar consumul curent este de 1800 kcal;
-    - *When:* Dashboard-ul este deschis;
-    - *Then:* Cercul central afișează: „1200 kcal Rămase”, iar bara de proteine arată procentul atins (ex: 90g / 150g = 60%).
-- **Sarcini Tehnice:**
-  - Frontend: Componentă Dashboard cu animație fluidă a progresului (SVG / Canvas / Tailwind UI).
+#### US-12: Nutrition Plan Selection
+- **User Story:** As a user seeking dietary structure, I want to pick from curated nutrition plans (e.g., High-Protein Bulk, Balanced Whole Foods, Vegetarian / Vegan, Low-Carb), so that my meal suggestions align with my dietary lifestyle.
+- **Priority:** **SHOULD HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Selecting a High-Protein Plan):**
+    - *Given:* The user visits the "Nutrition Plans" screen.
+    - *When:* They select "High-Protein Bulk".
+    - *Then:* Their target macro balance prioritizes protein sources, and the AI chat assistant defaults to high-protein meal templates.
 
 ---
 
-### EPIC 4: Monitorizare Progres & Evoluție Greutate (Bulk/Cut)
+### EPIC 3: Daily Tracking (4 Meals & Weight Progress)
 
-#### 🔹 US-10: Înregistrarea periodică a greutății corporale
-- **Format:** Ca utilizator, doresc să îmi pot nota greutatea măsurată dimineața (în kg, cu o zecimală), astfel încât să am un jurnal complet al cântăririlor mele.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **3 SP** | **Sprint:** 2
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Salvare cântărire):**
-    - *Given:* Utilizatorul deschide modulul de greutate;
-    - *When:* Introduce „71.4” kg și apasă „Salvează greutatea”;
-    - *Then:* Greutatea este salvată pentru data curentă în istoricul de greutate.
-- **Sarcini Tehnice:**
-  - Backend: Tabela `weight_logs` (user_id, weight_kg, recorded_date).
-  - Frontend: Câmp numeric rapid cu buton de logare pe ecranul principal.
-
----
-
-#### 🔹 US-11: Grafic vizual al evoluției greutății în raport cu targetul
-- **Format:** Ca utilizator în proces de bulk/cut, doresc să văd un grafic cu evoluția mea în timp și o linie punctată a obiectivului meu, astfel încât să știu dacă ritmul meu de creștere/scădere este conform planului.
-- **Prioritate:** **SHOULD HAVE** | **Estimare:** **5 SP** | **Sprint:** 2
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Afișare grafic cu trend):**
-    - *Given:* Utilizatorul are cel puțin 3 înregistrări de greutate în ultimele săptămâni;
-    - *When:* Accesează tab-ul „Progres”;
-    - *Then:* Este randat un grafic de tip linie (Line Chart) cu punctele istorice și o linie de referință reprezentând greutatea țintă.
-- **Sarcini Tehnice:**
-  - Frontend: Integrare bibliotecă de grafice (ex: Chart.js, Recharts sau Recharts-React).
+#### US-06: 4-Meal Daily Log (Breakfast, Lunch, Dinner, Snacks)
+- **User Story:** As an active user, I want my daily food log partitioned into four separate meal sections (Breakfast, Lunch, Dinner, Snacks), so that I can organize and track my food intake throughout the day.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Displaying 4 Distinct Meal Sections):**
+    - *Given:* The user navigates to the tracker screen for the current date.
+    - *When:* The page loads.
+    - *Then:* Four separate sections are rendered (*Breakfast*, *Lunch*, *Dinner*, *Snacks*), each displaying its individual subtotal of calories and an *"Add Food"* button.
+  - **Scenario 2 (Date Navigation):**
+    - *Given:* The user selects a past date from the calendar/navigation bar.
+    - *When:* The date changes.
+    - *Then:* The log reflects the meals and totals recorded for that specific day.
 
 ---
 
-### EPIC 5: Asistent AI Nutrițional & Recomandare Rețete (AI Chat)
-
-#### 🔹 US-13: Conectare API LLM și interfață de chat conversațional
-- **Format:** Ca utilizator, doresc să am acces la o secțiune de Chat cu un asistent virtual prietenos și specializat pe nutriție, astfel încât să pot discuta liber despre mâncare și rețete.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 3
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Trimitere și primire mesaj chat):**
-    - *Given:* Utilizatorul este pe ecranul „AI Assistant”;
-    - *When:* Scrie un mesaj și apasă Send;
-    - *Then:* Mesajul apare pe ecran, se afișează un indicator de scriere („DietNow AI gândește...”) și răspunsul AI-ului este afișat în format streaming.
-- **Sarcini Tehnice:**
-  - Backend: Gateway API pentru LLM (Google Gemini API SDK / OpenAI SDK) cu suport Server-Sent Events (SSE) pentru streaming.
-  - Frontend: Interfață de chat modernă (bule de dialog, auto-scroll la ultimul mesaj).
+#### US-07: Food Database Search
+- **User Story:** As a user adding food to a meal, I want to search an extensive nutritional database by keyword, so that I can quickly find ingredients and items with verified caloric and macro data.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Keyword Search Query):**
+    - *Given:* The user clicks *"Add Food"* under "Lunch" and types "chicken breast".
+    - *When:* At least 2 characters are entered.
+    - *Then:* A list of matching food items is returned displaying name, calories, and protein/carb/fat content per 100g.
 
 ---
 
-#### 🔹 US-14: Asistent AI contextualizat cu datele biometrice și jurnalul zilei
-- **Format:** Ca utilizator, doresc ca Asistentul AI să știe automat cine sunt, că sunt în faza de bulk și câte calorii mai am de mâncat azi, astfel încât să nu fiu nevoit să îi reamintesc aceste detalii la fiecare întrebare.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **5 SP** | **Sprint:** 3
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Recomandare automată adaptată caloriilor rămase):**
-    - *Given:* Utilizatorul mai are 600 kcal și 40g proteine disponibile pentru cină;
-    - *When:* Întreabă AI-ul: „Ce să mănânc la cină?”;
-    - *Then:* AI-ul formulează o propunere direct calibrată: „Având în vedere că mai ai 600 kcal și ai nevoie de 40g proteine pentru obiectivul tău de bulk, îți propun o cină cu...”.
-- **Sarcini Tehnice:**
-  - Backend: Prompt Engineering & System Prompt injection dinamic (injectează: sex, greutate, target, calorii rămase, preferințe salvate).
+#### US-08: Portion Logging & Dynamic Totaling
+- **User Story:** As a user, I want to enter the specific quantity (in grams or standard servings) for an item, so that the app calculates and adds the exact nutritional values to my meal and daily total.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Adding 180g of an item):**
+    - *Given:* The user selects "Oatmeal" (375 kcal / 100g).
+    - *When:* They input "80" grams and confirm.
+    - *Then:* The Breakfast section adds the entry with $300\text{ kcal}$, updating the Breakfast subtotal and the daily consumed counter immediately.
+  - **Scenario 2 (Deleting an Entry):**
+    - *Given:* A previously logged food entry.
+    - *When:* The user clicks the delete button.
+    - *Then:* The item is removed and the meal and day totals decrease instantly.
 
 ---
 
-#### 🔹 US-15: Generare de rețete pe baza ingredientelor din frigider
-- **Format:** Ca utilizator care are doar câteva ingrediente în bucătărie, doresc să îi scriu asistentului AI ce am în frigider (ex: ouă, cartofi, brânză) și pentru ce masă doresc rețeta (Breakfast, Lunch, Dinner, Snacks), astfel încât AI-ul să compună o rețetă delicioasă și exactă.
-- **Prioritate:** **MUST HAVE** | **Estimare:** **8 SP** | **Sprint:** 3
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Format structurat al rețetei generate):**
-    - *Given:* Utilizatorul transmite ingredientele: „am ton la conservă, paste integrale și porumb”;
-    - *When:* AI-ul răspunde;
-    - *Then:* Răspunsul este structurat obligatoriu cu:
-      1. Numele rețetei;
-      2. Ingrediente și cantități recomandate;
-      3. Timp de preparare;
-      4. Pași de gătire numerotați;
-      5. Tabel estimativ de Macronutrienți (Calorii, Proteine, Carbohidrați, Grăsimi).
-- **Sarcini Tehnice:**
-  - Prompt Engineering: Forțare răspuns structurat JSON / Markdown cu delimitatori clari pentru card de rețetă.
-  - Frontend: Randare formatată tip „Card Rețetă” cu buton rapid de copiere sau salvare.
+#### US-09: Live Dashboard (Remaining Calories & Macro Progress)
+- **User Story:** As a user, I want to view a visual summary on my home dashboard displaying calories consumed vs. calories remaining and progress bars for each macronutrient, so that I know exactly how much room I have left to eat.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Remaining Budget Display):**
+    - *Given:* A daily allowance of 3000 kcal with 1900 kcal logged so far.
+    - *When:* The dashboard is viewed.
+    - *Then:* The main indicator highlights **"1100 kcal Remaining"**, and individual progress bars show current percentage towards protein, carb, and fat goals.
 
 ---
 
-#### 🔹 US-16: Salvarea rețetelor generate de AI în colecția de Favorite
-- **Format:** Ca utilizator, doresc să pot salva o rețetă recomandată de AI printr-un singur click pe iconița de „Favorite”, astfel încât să o pot regăsi oricând în profilul meu fără să o regenerez.
-- **Prioritate:** **SHOULD HAVE** | **Estimare:** **3 SP** | **Sprint:** 3
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Salvare rețetă):**
-    - *Given:* Rețeta generată este afișată în chat;
-    - *When:* Utilizatorul apasă butonul „⭐ Salvează în Favorite”;
-    - *Then:* Rețeta este stocată în baza de date și devine vizibilă în tab-ul „Rețete Favorite”.
-- **Sarcini Tehnice:**
-  - Bază de date: Tabela `favorite_recipes` (id, user_id, title, ingredients_json, instructions, calories, macros).
-  - Frontend: Buton de acțiune direct în bucla mesajului AI.
+#### US-10: Periodic Weight Log Entry
+- **User Story:** As a user monitoring my body composition, I want to log my weigh-in values (in kg, to one decimal place), so that I maintain a historical record of my weight trajectory.
+- **Priority:** **MUST HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Logging Weight):**
+    - *Given:* The user opens the weight tracker dialog.
+    - *When:* They enter "72.4" kg and save.
+    - *Then:* The weight log is updated for the day and saved to their profile history.
 
 ---
 
-#### 🔹 US-17: Filtrare rețete AI după intoleranțe și restricții dietetice
-- **Format:** Ca utilizator cu restricții alimentare (ex: fără lactoză, fără gluten, vegan, fără nuci), doresc ca AI-ul să respecte strict aceste excluderi în orice rețetă propusă, astfel încât sănătatea mea să fie protejată.
-- **Prioritate:** **SHOULD HAVE** | **Estimare:** **3 SP** | **Sprint:** 4
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Excludere garantată a alergenilor):**
-    - *Given:* Utilizatorul a bifat „Intoleranță la lactoză” în setări;
-    - *When:* Cere o rețetă de snack dulce;
-    - *Then:* Rețeta nu conține lapte, unt sau iaurt convențional, recomandând înlocuitori (lapte de migdale, iaurt de cocos etc.).
-- **Sarcini Tehnice:**
-  - Backend: Reguli de tip "Guardrails" în system prompt-ul LLM.
+#### US-11: Visual Weight Progress Chart vs. Bulk Target
+- **User Story:** As a user tracking a bulk or cut, I want to see an interactive line chart illustrating my recorded weigh-ins alongside a target trendline, so that I can see whether I am on pace to hit my goal within my chosen timeframe.
+- **Priority:** **SHOULD HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Chart Visualization):**
+    - *Given:* The user has multiple logged weigh-ins across several weeks.
+    - *When:* They view the "Progress" tab.
+    - *Then:* A line chart renders all weigh-in data points with a reference dashed line representing the target weight trajectory.
 
 ---
 
-### EPIC 6: Setări, Profil & Ajustări Progresive
+### EPIC 4: Conversational AI Nutritionist (AI Chat)
 
-#### 🔹 US-18: Modificarea datelor din profil și recalcularea planului
-- **Format:** Ca utilizator al cărui nivel de activitate sau obiectiv s-a schimbat, doresc să îmi actualizez datele biometrice din Setări, astfel încât noile valori de BMR/TDEE să se recalculeze automat.
-- **Prioritate:** **SHOULD HAVE** | **Estimare:** **3 SP** | **Sprint:** 4
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Recalculare după atingerea greutății):**
-    - *Given:* Utilizatorul a atins greutatea de bulk și dorește trecerea la menținere;
-    - *When:* Comută obiectivul pe „Menținere”;
-    - *Then:* Surplusul caloric este anulat, noul target zilnic fiind egal cu TDEE-ul curent.
-- **Sarcini Tehnice:**
-  - Backend: Endpoint PUT `/api/profile` cu apelare automată a funcției de recalculare a planului.
+#### US-13: Conversational AI Chat Interface & Integration
+- **User Story:** As a user, I want to access a conversational chat screen powered by an AI assistant, so that I can ask questions about meals, get nutritional tips, and brainstorm ideas in natural language.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Real-Time Conversational Flow):**
+    - *Given:* The user is on the AI Chat screen.
+    - *When:* They send a query (e.g., *"What is a quick high-protein snack I can eat before my workout?"*).
+    - *Then:* The message is sent, a typing/thinking indicator appears, and the AI streams back a coherent, actionable answer within 3 seconds.
 
 ---
 
-#### 🔹 US-19: Adăugarea de alimente personalizate sau rețete proprii
-- **Format:** Ca utilizator, doresc să adaug manual un aliment cu eticheta sa nutrițională dacă nu îl găsesc în baza de date standard, astfel încât să îl pot refolosi la viitoarele logări.
-- **Prioritate:** **SHOULD HAVE** | **Estimare:** **5 SP** | **Sprint:** 4
-- **Criterii de Acceptanță:**
-  - **Scenariul 1 (Creare aliment custom):**
-    - *Given:* Utilizatorul nu găsește un produs local la căutare;
-    - *When:* Introduce Nume, Kcal, Proteine, Carbo și Grăsimi per 100g și salvează;
-    - *Then:* Produsul apare în secțiunea „Alimentele Mele” și poate fi adăugat la orice masă.
-- **Sarcini Tehnice:**
-  - Backend: Câmp `created_by_user_id` în tabela `foods`.
+#### US-14: Context-Aware AI (Profile & Remaining Macro Injection)
+- **User Story:** As a user, I want the AI assistant to automatically know my biometrics, that I am currently bulking, and how many calories/protein I have left today, so that I do not need to re-explain my stats every time I chat.
+- **Priority:** **MUST HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Automatic Context Injection):**
+    - *Given:* The user has 650 kcal and 45g of protein remaining today and has an active bulk goal.
+    - *When:* The user asks: *"What should I have for dinner tonight?"*
+    - *Then:* The AI prompt receives this context invisibly and responds with: *"Since you have 650 kcal and 45g of protein left today for your bulk target, here is a dinner idea that hits those numbers..."*
 
 ---
 
-## 🚀 4. Planificarea pe Sprint-uri (Sprint Breakdown)
-
-Alocarea este calibrată pentru o echipă de studenți cu o viteză medie de **~15 - 20 Story Points / Sprint** (durată Sprint: 2 săptămâni).
-
-```mermaid
-pie title Distribuția Story Points pe Sprint-uri (Total: 73 SP)
-    "Sprint 1 (Fundație & Onboarding)" : 19
-    "Sprint 2 (Tracking 4 Mese & Greutate)" : 23
-    "Sprint 3 (AI Chat & Generare Rețete)" : 21
-    "Sprint 4 (Filtre, Setări & Polish)" : 10
-```
-
-### 🗓️ Sprint 1: Fundație, Autentificare & Onboarding Biometric
-- **Obiectiv Sprint 1:** Utilizatorul se poate înregistra/autentifica, parcurge chestionarul complet (sex, înălțime, kg, activitate, obiectiv bulk/cut, timp) și primește instant targetul de calorii și macronutrienți.
-- **Stories incluse:**
-  - `US-01`: Înregistrare & Login JWT (5 SP)
-  - `US-02`: Chestionar date biometrice (5 SP)
-  - `US-03`: Obiectiv bulk/cut și orizont de timp (3 SP)
-  - `US-04`: Algoritm calcul BMR și TDEE (3 SP)
-  - `US-05`: Repartiție macronutrienți (3 SP)
-- **Total Sprint 1:** **19 Story Points**
+#### US-15: Recipe Generator Based on Available Fridge Ingredients
+- **User Story:** As a user with limited groceries at home, I want to tell the AI what ingredients I have in my fridge and which meal I am cooking for (Breakfast, Lunch, Dinner, Snack), so that it invents a tasty recipe with exact steps and estimated macros.
+- **Priority:** **MUST HAVE** | **Points:** **8 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Structured Recipe Output):**
+    - *Given:* The user types: *"I have eggs, canned black beans, onions, and salsa. Give me a lunch recipe for bulk."*
+    - *When:* The AI generates the output.
+    - *Then:* The recipe is returned in a structured format containing:
+      1. **Recipe Title**;
+      2. **Preparation & Cook Time**;
+      3. **Ingredient List with exact quantities**;
+      4. **Numbered Step-by-Step Cooking Instructions**;
+      5. **Nutrition Estimation Card** (Calories, Protein, Carbs, Fat).
 
 ---
 
-### 🗓️ Sprint 2: Core Tracking – Jurnal pe 4 Mese & Monitorizare Greutate
-- **Obiectiv Sprint 2:** Utilizatorul poate loga alimente pe cele 4 mese (Breakfast, Lunch, Dinner, Snacks), vede barele de progres în dashboard și își poate nota evoluția greutății cu reprezentare grafică.
-- **Stories incluse:**
-  - `US-06`: Structură jurnal zilnic pe 4 mese (5 SP)
-  - `US-07`: Bază de date alimente și căutare (5 SP)
-  - `US-08`: Înregistrare porții și calcul automat (5 SP)
-  - `US-09`: Dashboard progres calorii & macronutrienți (5 SP)
-  - `US-10`: Logare greutate periodică (3 SP)
-  - *(Opțional/Bonus)* `US-11`: Grafic vizual evoluție greutate (5 SP)
-- **Total Sprint 2:** **23 Story Points**
+#### US-16: 1-Click Save Recipe to Favorites
+- **User Story:** As a user pleased with an AI-generated recipe, I want to click a "Save to Favorites" button directly inside the chat, so that I can store the recipe in my permanent collection without copy-pasting.
+- **Priority:** **SHOULD HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Recipe Persistence):**
+    - *Given:* A recipe generated by the AI is displayed in chat.
+    - *When:* The user clicks the bookmark / ⭐ "Save Recipe" button.
+    - *Then:* The full recipe object is saved to the user's database record and immediately accessible in the "My Favorite Recipes" section.
 
 ---
 
-### 🗓️ Sprint 3: Asistent AI Nutrițional & Recomandare Rețete
-- **Obiectiv Sprint 3:** Utilizatorul poate deschide fereastra de AI Chat, iar asistentul (cunoscându-i profilul de bulk și caloriile rămase) îi generează rețete personalizate pe baza ingredientelor specificate, permițând salvarea în Favorite.
-- **Stories incluse:**
-  - `US-13`: Conectare API LLM și interfață chat (5 SP)
-  - `US-14`: Context-awareness AI (profil, calorii rămase, bulk) (5 SP)
-  - `US-15`: Generare rețete pe baza ingredientelor (8 SP)
-  - `US-16`: Salvare rețetă în Favorite (3 SP)
-  - *(Parțial)* `US-12`: Selecție plan alimentar (3 SP)
-- **Total Sprint 3:** **21 - 24 Story Points**
+#### US-17: Dietary Preferences & Intolerance Filters
+- **User Story:** As a user with food intolerances or specific eating preferences (lactose intolerance, gluten-free, vegan, nut allergies), I want the AI to strictly enforce these exclusions, so that every meal and snack recommended is safe for me to eat.
+- **Priority:** **SHOULD HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Strict Allergen Compliance):**
+    - *Given:* The user has flagged "Lactose Intolerant" in their preferences.
+    - *When:* They ask the AI for a dessert or snack recommendation.
+    - *Then:* The AI never proposes dairy products, recommending safe alternatives (e.g., coconut yogurt, plant-based milk).
 
 ---
 
-### 🗓️ Sprint 4: Rafinare, Restricții Culinare, QA & Pregătire Prezentare
-- **Obiectiv Sprint 4:** Finalizarea filtrelor pentru intoleranțe alimentare, editarea profilului, testare integrală (DoD) și pregătirea demonstratorului pentru evaluarea finală.
-- **Stories incluse:**
-  - `US-17`: Filtrare rețete AI după intoleranțe/alergii (3 SP)
-  - `US-18`: Editare date profil și recalculare plan (3 SP)
-  - `US-19`: Adăugare alimente personalizate (5 SP)
-  - Testare End-to-End, rezolvare bug-uri și optimizări UI/UX.
-- **Total Sprint 4:** **11 Story Points + Bug Fixing & Polish**
+### EPIC 5: Account Management & Enhancements
+
+#### US-18: Profile Settings & Recalibration
+- **User Story:** As a user whose weight, activity, or target changes over time, I want to update my profile settings, so that the application recalibrates my daily calorie and macro goals accordingly.
+- **Priority:** **SHOULD HAVE** | **Points:** **3 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Target Reached / Recalibration):**
+    - *Given:* A user finishes their bulk and switches their goal to "Maintenance".
+    - *When:* They save the new objective in Settings.
+    - *Then:* The surplus calories are removed and the daily calorie allowance is reset to match their current TDEE.
 
 ---
 
-## 📈 5. Tehnica de Estimare și Justificarea Punctelor (Story Points)
-
-- **Scara Fibonacci:** Echipa a utilizat valorile **1, 2, 3, 5, 8, 13**.
-- **Punct de referință (Anchor Story):** `US-04` (Calcul BMR/TDEE) a fost evaluat la **3 SP** (logică algoritmică clară, formule matematice bine definite, efort moderat).
-- **Poveștile de 5 SP** (ex: `US-01` Auth, `US-06` Jurnal 4 Mese, `US-13` Conexiune LLM) implică atât logică de backend, cât și componente interactive de frontend și comunicare securizată.
-- **Poveștile de 8 SP** (ex: `US-15` Generare rețete inteligente și `US-20` Scanare coduri de bare) implică complexitate ridicată, gestionare de prompturi asincrone, parsare JSON imprevizibilă sau integrare hardware (cameră foto mobilă).
+#### US-19: Custom Food Item Creation
+- **User Story:** As a user consuming local or specialty foods not present in the default database, I want to manually create custom food items with their nutritional label data, so that I can accurately log them into my meals.
+- **Priority:** **SHOULD HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Custom Food Creation):**
+    - *Given:* The user cannot find a specific snack in search.
+    - *When:* They input the Name, Brand, Calories, and Macros per 100g in the "Create Custom Food" form.
+    - *Then:* The item is saved to their personal library and selectable in any meal.
 
 ---
 
-*Acest Product Backlog este gata de prezentat în cadrul laboratorului și de integrat în instrumentele de management de proiect (Jira, GitHub Projects, Trello).*
+#### US-20: Barcode Scanner for Packaging
+- **User Story:** As a mobile user, I want to scan product barcodes using my device camera, so that I can log packaged foods instantly without typing.
+- **Priority:** **COULD HAVE** | **Points:** **8 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (UPC / EAN Lookup):**
+    - *Given:* A user scans a food barcode.
+    - *When:* The barcode is recognized.
+    - *Then:* The nutrition data is fetched automatically from an open database (e.g., OpenFoodFacts) and pre-filled in the meal log.
+
+---
+
+#### US-21: Weekly Nutrition & Weight Progress PDF Export
+- **User Story:** As a dedicated user or trainee working with a coach, I want to export my weekly nutrition and weigh-in log as a clean PDF summary, so that I can review long-term consistency.
+- **Priority:** **COULD HAVE** | **Points:** **5 SP**
+- **Acceptance Criteria:**
+  - **Scenario 1 (Export Generation):**
+    - *Given:* A week with logged data.
+    - *When:* The user clicks "Export Weekly Report".
+    - *Then:* A formatted PDF is downloaded displaying daily average calories, macro distribution, and weight change.
+
+---
+
+## 📈 5. Backlog Summary & Estimation Totals
+
+- **Total Backlog Items:** 21 User Stories
+- **MVP Must-Have Scope:** **50 Story Points** (US-01 through US-10, US-13, US-14, US-15)
+  - Covers complete onboarding, metabolic math, 4-meal tracking, daily dashboard, weight log, and interactive AI recipe generator.
+- **Should-Have Scope:** **25 Story Points** (Weight chart, Nutrition plans, Favorite recipes, Allergy filters, Profile recalibration, Custom foods)
+- **Could-Have Scope (Future Iterations):** **13 Story Points** (Barcode scanner, PDF reports)
