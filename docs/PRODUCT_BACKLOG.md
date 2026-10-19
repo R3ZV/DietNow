@@ -4,15 +4,22 @@
 
 ## 💡 1. Project Concept & Idea
 
-**DietNow** is an intelligent nutrition and diet-tracking application designed to remove friction from meal planning and fitness goals. The app focuses on two core pillars: seamless macro/weight tracking and an interactive conversational AI that suggests recipes and meal ideas tailored to what you have and what you like.
+**DietNow** is an intelligent nutrition and diet-tracking application designed
+to remove friction from meal planning and fitness goals. The app focuses on two
+core pillars: seamless macro/weight tracking and an interactive conversational
+AI that suggests recipes and meal ideas tailored to what you have and what you like.
 
 ### Initial Onboarding Questionnaire
 When a user joins the app, they complete a guided profiling flow:
 - **Biometrics:** Gender (female / male), age, height (cm), current weight (kg).
 - **Activity Level:** Sedentary, lightly active, moderately active, very active.
 - **Fitness Goal:** Bulking (muscle/weight gain), cutting (fat loss), or maintenance.
-- **Target Metrics:** Desired target weight (kg) and the timeframe/deadline to achieve the goal (e.g., 10 weeks, 3 months).
-- **Automated Calculation:** The system automatically calculates BMR (Basal Metabolic Rate), TDEE (Total Daily Energy Expenditure), the daily caloric surplus/deficit needed to reach the goal within the chosen timeframe, and the optimal macronutrient breakdown (protein, carbs, fats).
+- **Target Metrics:** Desired target weight (kg) and the timeframe/deadline to
+  achieve the goal (e.g., 10 weeks, 3 months).
+- **Automated Calculation:** The system automatically calculates BMR (Basal Metabolic Rate),
+  TDEE (Total Daily Energy Expenditure), the daily caloric surplus/deficit needed
+  to reach the goal within the chosen timeframe, and the optimal macronutrient
+  breakdown (protein, carbs, fats).
 
 ### The Two Core Pillars
 
@@ -22,22 +29,35 @@ When a user joins the app, they complete a guided profiling flow:
   2. **Lunch**
   3. **Dinner**
   4. **Snacks**
-- **Calorie & Macro Progress:** Real-time dashboard showing calories consumed vs. calories remaining, along with progress bars for protein, carbohydrate, and fat targets.
-- **Weight Tracking:** Periodic weight log tracking progress against the target weight over the specified timeframe.
-- **Nutrition Plans:** Ability to browse and select a structured diet plan (e.g., *High-Protein Bulk*, *Balanced Diet*, *Clean Vegetarian*, *Keto / Low-Carb*).
+- **Calorie & Macro Progress:** Real-time dashboard showing calories consumed
+  vs. calories remaining, along with progress bars for protein, carbohydrate, and fat targets.
+- **Weight Tracking:** Periodic weight log tracking progress against the target
+  weight over the specified timeframe.
+- **Nutrition Plans:** Ability to browse and select a structured diet plan
+  (e.g., *High-Protein Bulk*, *Balanced Diet*, *Clean Vegetarian*, *Keto / Low-Carb*).
 
 #### Pillar 2: Conversational AI Nutritionist (AI Chat)
-- **Natural Language Assistant:** A dedicated in-app chat where users can talk naturally about food, nutrition, and cravings.
-- **Custom Recipe Generator:** The user inputs what ingredients they have on hand (e.g., in their fridge/pantry) and what meal they need (breakfast, lunch, dinner, snack), and the AI produces a ready-to-cook recipe matching their exact remaining macros.
-- **Dietary Preferences & Intolerances:** Users can specify allergies and preferences (lactose-free, gluten-free, vegetarian, high-protein, sweet vs. savory cravings), which the AI strictly respects in every recommendation.
-- **Save to Favorites:** Instant 1-click option to save any generated recipe into the user's personal recipe book.
+- **Natural Language Assistant:** A dedicated in-app chat where users can talk
+  naturally about food, nutrition, and cravings.
+- **Custom Recipe Generator:** The user inputs what ingredients they have on
+  hand (e.g., in their fridge/pantry) and what meal they need (breakfast, lunch, dinner, snack),
+  and the AI produces a ready-to-cook recipe matching their exact remaining macros.
+- **Dietary Preferences & Intolerances:** Users can specify allergies and preferences
+  (lactose-free, gluten-free, vegetarian, high-protein, sweet vs. savory cravings),
+  which the AI strictly respects in every recommendation.
+- **Save to Favorites:** Instant 1-click option to save any generated recipe
+  into the user's personal recipe book.
 
 ---
 
 ## 🎯 2. Product Goal
 
-> **Product Goal:**  
-> *"Deliver a functional MVP of DietNow that enables users to complete an onboarding questionnaire, calculate their personalized calorie and macro targets for bulking or cutting, track their daily meals across Breakfast, Lunch, Dinner, and Snacks, monitor weight progress, and receive instant, personalized recipe recommendations through an interactive AI chat assistant."*
+> **Product Goal:**
+> *"Deliver a functional MVP of DietNow that enables users to complete an onboarding
+questionnaire, calculate their personalized calorie and macro targets for bulking
+or cutting, track their daily meals across Breakfast, Lunch, Dinner, and Snacks,
+monitor weight progress, and receive instant, personalized recipe recommendations
+through an interactive AI chat assistant."*
 
 ---
 
