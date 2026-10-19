@@ -45,15 +45,8 @@ gluten-free, vegan, sweet vs. savory cravings).
 The complete, official Product Backlog is documented in:
 👉 **[docs/PRODUCT_BACKLOG.md](docs/PRODUCT_BACKLOG.md)**
 
-It includes:
-- **Master Backlog Matrix:** Complete table of 21 User Stories with MoSCoW priorities,
-Story Point estimates (Fibonacci), and dependencies.
-- **Detailed User Stories:** Formatted in standard Agile format
-(*As a... / I want... / So that...*) with rigorous **Given-When-Then Acceptance
-Criteria** for each story.
-- **Epic Categorizatio:**
-  - `EPIC 1`: Onboarding & Biometric Profiling
-  - `EPIC 2`: Caloric Calculation & Nutrition Plans
-  - `EPIC 3`: Daily Tracking (4 Meals & Weight Progress)
-  - `EPIC 4`: Conversational AI Nutritionist (AI Chat)
-  - `EPIC 5`: Account Management & Enhancements
+- **Detailed User Stories:** Formatted in standard Agile format (*As a... / I want... / So that...*) with rigorous **Given-When-Then Acceptance Criteria** for each story.
+- **Module Structure:**
+  - `Module 1`: Account & Onboarding Questionnaire (Biometrics, Target Bulk Weight & Timeline, Calorie/Macro Engine)
+  - `Module 2`: Tracking (4-Meal Daily Log, Daily Dashboard, Weight Progress, Nutrition Plans)
+  - `Module 3`: AI Recipe & Meal Assistant (Preferences, Recipe Recommendations by Meal, Fridge Ingredients, Favorites)
