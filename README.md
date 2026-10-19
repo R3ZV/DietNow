@@ -4,11 +4,39 @@
 
 DietNow is a modern web application designed to simplify personal
 nutrition and help users reach their physique goals (bulking, cutting, or maintenance)
-through streamlined tracking and real-time AI recipe generation.
+through streamlined tracking and real-time AI recipe generation, while also
+educating in regards to longevity foods that are missing from his / her diet.
 
----
+## Team
 
-## 💡 Project Concept
+- Maracine Constantin-Razvan - Product Owner
+- Antonie Chirilus - Scrum Master
+- Stancu Rares - Developer
+- Istrate Irina - Developer
+- Petrache Alexia - Developer
+
+## 📋 Product Backlog
+
+The complete, official Product Backlog is documented in:
+👉 **[docs/PRODUCT_BACKLOG.md](docs/PRODUCT_BACKLOG.md)**
+
+- `EPIC 1`: Onboarding & Biometric Profiling
+- `EPIC 2`: Caloric Calculation & Nutrition Plans
+- `EPIC 3`: Daily Tracking (4 Meals & Weight Progress)
+- `EPIC 4`: Conversational AI Nutritionist (AI Chat)
+- `EPIC 5`: Account Management & Enhancements
+- `EPIC 6`: Longevity Recommendation Engine & Scientific Insights (Bryan Johnson Research)
+
+## 💡 Project Goal
+
+In a fast-paced society where fast food is booming, more people are neglecting
+their nutrition to save time—ultimately trading years of their lives for short-term
+convenience. Our application draws on Bryan Johnson’s longevity research to help
+users understand the true impact of diet on their bodies.
+
+By cutting through the noise of online influencers pushing cookbooks and trendy
+recipes, we deliver strictly science-backed insights into the foods proven to
+extend your lifespan.
 
 DietNow removes the guesswork and decision fatigue around daily eating through
 two interconnected pillars:
@@ -38,15 +66,17 @@ tailored to your remaining macros.
 gluten-free, vegan, sweet vs. savory cravings).
 - **Save to Favorites:** Instant 1-click saving of generated recipes.
 
----
+### 4. Core feature 3: Longevity Recommendation Engine
+- **Insights:** Show the user what crucial vitamins / antioxidants it misses
+- **Engine:** Offer suggestions of what foods can be eaten to solve previously
+  mentioned insights.
+- **Educate:** Educate the user on the effect of what he is eating / not eating
+  has on its body.
 
-## 📋 Product Backlog
+## Users & Usecases
 
-The complete, official Product Backlog is documented in:
-👉 **[docs/PRODUCT_BACKLOG.md](docs/PRODUCT_BACKLOG.md)**
-
-- **Detailed User Stories:** Formatted in standard Agile format (*As a... / I want... / So that...*) with rigorous **Given-When-Then Acceptance Criteria** for each story.
-- **Module Structure:**
-  - `Module 1`: Account & Onboarding Questionnaire (Biometrics, Target Bulk Weight & Timeline, Calorie/Macro Engine)
-  - `Module 2`: Tracking (4-Meal Daily Log, Daily Dashboard, Weight Progress, Nutrition Plans)
-  - `Module 3`: AI Recipe & Meal Assistant (Preferences, Recipe Recommendations by Meal, Fridge Ingredients, Favorites)
+The main groups of people that would benefit from this application are people who:
+- Go to the gym and want to dial down their diet
+- Want to lose fat
+- Want to prioritize longevity and slow down biological aging
+- Don't know what to eat and want science-backed advice instead of influencer trends
