@@ -1,0 +1,5 @@
+# Local secrets / config
+.env
+
+# Claude Code local settings
+.claude/

@@ -1,0 +1,38 @@
+# Local PostgreSQL for DietNow.
+#
+#   docker compose up -d        # start the database in the background
+#   docker compose logs -f db   # follow logs
+#   docker compose down         # stop (data is preserved in the named volume)
+#   docker compose down -v      # stop AND wipe the data volume (fresh start)
+#
+# Credentials/ports are read from backend/.env (see .env.example). The Go app
+# connects to the same database using the DB_* variables in that file.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dietnow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-dietnow}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dietnow_dev_pw}
+      POSTGRES_DB: ${DB_NAME:-dietnow}
+      # Keep server time in UTC; all calendar dates are stored as bare DATEs
+      # (see internal/models/localdate.go) so the server zone never skews them.
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      # host:container — override DB_PORT in .env if 5432 is taken locally.
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Named volume => data survives `docker compose down` and host restarts.
+      - dietnow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dietnow} -d ${DB_NAME:-dietnow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dietnow_pgdata:
+    name: dietnow_pgdata
