@@ -1,4 +1,4 @@
-# DietNow — Backend Persistence Layer
+# DietNow — Backend
 
 Go + GORM + PostgreSQL persistent storage for DietNow's first release. No raw SQL
 scripts: all schema, migrations, constraints, and seeding are defined in Go via
@@ -9,9 +9,12 @@ GORM.
 ```
 backend/
 ├── docker-compose.yml          # local PostgreSQL with a persistent volume
-├── .env.example                # copy to .env
+├── .env.example                # copy to .env (local)
+├── .env.staging.example        # staging template (placeholders only)
+├── AUTH.md                     # authentication & sessions design
 ├── go.mod
 ├── cmd/
+│   ├── api/main.go             # `go run ./cmd/api`      -> HTTP API
 │   ├── migrate/main.go         # `go run ./cmd/migrate`  -> AutoMigrate
 │   └── seed/main.go            # `go run ./cmd/seed`      -> migrate + seed
 └── internal/
@@ -22,7 +25,10 @@ backend/
     │   ├── profile.go          # biometrics + persisted calorie/macro targets
     │   ├── weightlog.go        # historical weigh-ins
     │   ├── food.go             # per-100g macro/micro profiles (global + private)
-    │   └── mealentry.go        # 4-meal tracker with nutrition snapshots
+    │   ├── mealentry.go        # 4-meal tracker with nutrition snapshots
+    │   └── session.go          # server-side login sessions
+    ├── auth/                   # bcrypt + sessions + RequireAuth middleware
+    ├── httpapi/                # routes, handlers, CORS, integration tests
     ├── database/
     │   ├── database.go         # pooled connection from env
     │   ├── migrate.go          # AutoMigrate
@@ -44,7 +50,12 @@ docker compose up -d            # start PostgreSQL (data persists in volume diet
 
 go mod tidy                     # resolve dependencies
 go run ./cmd/seed               # migrate the schema + insert the test dataset
+go run ./cmd/api                # start the API on :8080
+go test ./...                   # tests (need the database running)
 ```
+
+Authentication, sessions and the env vars for local/staging are documented in
+[AUTH.md](AUTH.md).
 
 Seed login: `test@dietnow.app` / `Password123!`.
 

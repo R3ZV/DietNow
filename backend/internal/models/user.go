@@ -25,5 +25,6 @@ type User struct {
 	MealEntries []MealEntry  `gorm:"constraint:OnDelete:CASCADE;" json:"mealEntries,omitempty"`
 	// Private foods created by this user. Global foods have OwnerUserID = NULL
 	// and are intentionally NOT part of this cascade.
-	Foods []Food `gorm:"foreignKey:OwnerUserID;constraint:OnDelete:CASCADE;" json:"foods,omitempty"`
+	Foods    []Food    `gorm:"foreignKey:OwnerUserID;constraint:OnDelete:CASCADE;" json:"foods,omitempty"`
+	Sessions []Session `gorm:"constraint:OnDelete:CASCADE;" json:"-"`
 }
