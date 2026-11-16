@@ -1,26 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { RouterProvider, createMemoryRouter } from 'react-router-dom';
-import { vi } from 'vitest';
-import { providerFutureFlags, routerFutureFlags, routes } from './routes';
-
-function renderAt(path: string) {
-  const router = createMemoryRouter(routes, {
-    initialEntries: [path],
-    future: routerFutureFlags,
-  });
-  return render(<RouterProvider router={router} future={providerFutureFlags} />);
-}
-
-function mockFetch(status: number, body: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    }),
-  );
-  vi.stubGlobal('fetch', fetchMock);
-  return fetchMock;
-}
+import { screen, within } from '@testing-library/react';
+import { mockFetch, renderAt } from './test/helpers';
 
 describe('app routing and layout', () => {
   it('renders the home page inside the shared layout and shows API health', async () => {
@@ -51,9 +30,19 @@ describe('app routing and layout', () => {
     ['/tracker', /daily tracker/i],
     ['/chat', /ai nutritionist/i],
     ['/profile', /profile/i],
+    ['/register', /create account/i],
+    ['/login', /log in/i],
   ])('routes %s to its page', (path, heading) => {
     renderAt(path);
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  });
+
+  it('links to the login and registration pages from the header (US-19)', () => {
+    renderAt('/tracker');
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
+
+    expect(nav.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(nav.getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register');
   });
 
   it('renders a not-found page for unknown routes', () => {
