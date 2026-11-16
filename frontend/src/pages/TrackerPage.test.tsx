@@ -75,3 +75,32 @@ describe('tracker page (US-08)', () => {
     expect(await screen.findByTestId('current-path')).toHaveTextContent('/login');
   });
 });
+
+describe('adding food from the tracker (US-09)', () => {
+  it('opens the food search under the meal whose Add Food was tapped', async () => {
+    mockFetch(200, summary('2026-11-16'));
+    renderPage('/tracker', <TrackerPage />);
+    const lunch = await screen.findByRole('region', { name: 'Lunch' });
+
+    fireEvent.click(within(lunch).getByRole('button', { name: 'Add Food' }));
+    mockFetch(200, {
+      foods: [
+        {
+          id: 3,
+          name: 'Chicken Breast, cooked',
+          nutrition: { caloriesKcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 },
+        },
+      ],
+    });
+    fireEvent.change(within(lunch).getByLabelText('Search food'), { target: { value: 'Chicken breast' } });
+    fireEvent.click(within(lunch).getByRole('button', { name: 'Search' }));
+
+    expect(
+      await within(lunch).findByText(
+        'Chicken Breast, cooked: 165 kcal, 31 g protein, 0 g carbs, 3.6 g fat per 100 g',
+      ),
+    ).toBeInTheDocument();
+    // Only the tapped meal gets a search box.
+    expect(screen.getAllByLabelText('Search food')).toHaveLength(1);
+  });
+});
