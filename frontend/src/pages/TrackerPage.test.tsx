@@ -1,15 +1,15 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { mockFetch, renderPage } from '../test/helpers';
 import { TrackerPage } from './TrackerPage';
 
-/** A /api/daily-summary response: one 80 g oatmeal entry at breakfast, the other meals empty. */
-function summary(date: string) {
+/** A /api/daily-summary response: one 80 g, 300 kcal entry at breakfast, the other meals empty. */
+function summary(date: string, foodName = 'Oatmeal') {
   return {
     date,
     meals: [
       {
         mealType: 'breakfast',
-        entries: [{ id: 1, foodName: 'Oatmeal', portionGrams: 80, nutrition: { caloriesKcal: 300 } }],
+        entries: [{ id: 1, foodName, portionGrams: 80, nutrition: { caloriesKcal: 300 } }],
         subtotal: { caloriesKcal: 300 },
       },
       { mealType: 'lunch', entries: [], subtotal: { caloriesKcal: 0 } },
@@ -37,5 +37,19 @@ describe('tracker page (US-08)', () => {
     }
     // No date sent: the backend picks "today" in the user's own time zone.
     expect(fetchMock).toHaveBeenCalledWith('/api/daily-summary', expect.anything());
+  });
+
+  it('shows the meals of the date picked in the date selector', async () => {
+    mockFetch(200, summary('2026-11-16'));
+    renderPage('/tracker', <TrackerPage />);
+    const dateInput = await screen.findByLabelText('Date');
+    expect(dateInput).toHaveValue('2026-11-16');
+
+    const fetchMock = mockFetch(200, summary('2026-11-15', 'Eggs'));
+    fireEvent.change(dateInput, { target: { value: '2026-11-15' } });
+
+    expect(await screen.findByText('Eggs, 80 g, 300 kcal')).toBeInTheDocument();
+    expect(screen.getByLabelText('Date')).toHaveValue('2026-11-15');
+    expect(fetchMock).toHaveBeenCalledWith('/api/daily-summary?date=2026-11-15', expect.anything());
   });
 });
