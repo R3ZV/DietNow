@@ -22,7 +22,11 @@ export function TrackerPage() {
     // `cancelled` drops a slow answer for a day the user has already left.
     let cancelled = false;
     getDailySummary(date)
-      .then((day) => !cancelled && setSummary(day))
+      .then((day) => {
+        if (cancelled) return;
+        setSummary(day);
+        setError(null);
+      })
       .catch((err: unknown) => {
         if (cancelled) return;
         // replace: Back from the login page must not land here and redirect again.
