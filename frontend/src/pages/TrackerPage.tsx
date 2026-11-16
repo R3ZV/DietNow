@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { getDailySummary, type DailySummary, type MealType } from '../api/tracker';
+import { FoodSearch } from '../components/FoodSearch';
 
 const mealLabels: Record<MealType, string> = {
   breakfast: 'Breakfast',
@@ -10,13 +11,18 @@ const mealLabels: Record<MealType, string> = {
   snack: 'Snacks',
 };
 
-/** The daily tracker (US-08): one day's four meals, each with its foods and calorie subtotal. */
+/**
+ * The daily tracker: one day's four meals, each with its foods and calorie subtotal (US-08),
+ * and an Add Food button that opens a food search under that meal (US-09).
+ */
 export function TrackerPage() {
   const navigate = useNavigate();
   // Unset until the user picks a day; the backend then shows today in the user's time zone.
   const [date, setDate] = useState<string>();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The meal whose food search is open; one at a time.
+  const [addingTo, setAddingTo] = useState<MealType | null>(null);
 
   useEffect(() => {
     // `cancelled` drops a slow answer for a day the user has already left.
@@ -64,10 +70,14 @@ export function TrackerPage() {
                 </li>
               ))}
             </ul>
-            {/* shortcut: disabled until US-09 adds food search, enable it there */}
-            <button type="button" disabled>
+            <button
+              type="button"
+              aria-expanded={addingTo === meal.mealType}
+              onClick={() => setAddingTo(addingTo === meal.mealType ? null : meal.mealType)}
+            >
               Add Food
             </button>
+            {addingTo === meal.mealType && <FoodSearch />}
           </section>
         ))}
       </div>
