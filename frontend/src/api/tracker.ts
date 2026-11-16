@@ -10,11 +10,20 @@ export interface MealEntry {
   nutrition: { caloriesKcal: number };
 }
 
+export interface NutritionTotals {
+  caloriesKcal: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+}
+
 export interface DailySummary {
   /** The day shown, YYYY-MM-DD. */
   date: string;
   /** The whole day, all four meals together. */
-  consumed: { caloriesKcal: number };
+  consumed: NutritionTotals;
+  targets: NutritionTotals | null;
+  remaining: NutritionTotals | null;
   /** Always the four meals, in this order: breakfast, lunch, dinner, snack. */
   meals: { mealType: MealType; entries: MealEntry[]; subtotal: { caloriesKcal: number } }[];
 }

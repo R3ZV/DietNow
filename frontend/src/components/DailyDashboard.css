@@ -1,0 +1,10 @@
+.daily-dashboard { margin: 1.5rem 0; padding: 1.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.daily-dashboard h2 { margin-top: 0; }
+.calorie-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem 2rem; }
+.calorie-summary p { margin: .25rem 0 1rem; }
+.calorie-budget { font-size: 1.5rem; font-weight: 700; }
+.macro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.5rem; }
+.macro-card h3 { margin-bottom: .5rem; }
+.macro-card p { margin: .5rem 0; }
+.macro-card progress { width: 100%; height: .8rem; accent-color: var(--accent); }
+.daily-dashboard a { color: var(--accent); }

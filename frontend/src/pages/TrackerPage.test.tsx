@@ -6,7 +6,9 @@ import { TrackerPage } from './TrackerPage';
 function summary(date: string, foodName = 'Oatmeal') {
   return {
     date,
-    consumed: { caloriesKcal: 300 },
+    consumed: { caloriesKcal: 300, proteinG: 10, carbsG: 50, fatG: 5 },
+    targets: { caloriesKcal: 3000, proteinG: 140, carbsG: 450, fatG: 70 },
+    remaining: { caloriesKcal: 2700, proteinG: 130, carbsG: 400, fatG: 65 },
     meals: [
       {
         mealType: 'breakfast',
@@ -46,10 +48,11 @@ describe('tracker page (US-08)', () => {
     const dateInput = await screen.findByLabelText('Date');
     expect(dateInput).toHaveValue('2026-11-16');
 
-    const fetchMock = mockFetch(200, summary('2026-11-15', 'Eggs'));
+    const fetchMock = mockFetch(200, { ...summary('2026-11-15', 'Eggs'), remaining: { caloriesKcal: 1200, proteinG: 60, carbsG: 200, fatG: 25 } });
     fireEvent.change(dateInput, { target: { value: '2026-11-15' } });
 
     expect(await screen.findByText('Eggs, 80 g, 300 kcal')).toBeInTheDocument();
+    expect(screen.getByText('1200 kcal Remaining')).toBeInTheDocument();
     expect(screen.getByLabelText('Date')).toHaveValue('2026-11-15');
     expect(fetchMock).toHaveBeenCalledWith('/api/daily-summary?date=2026-11-15', expect.anything());
   });
@@ -135,6 +138,8 @@ describe('logging portions (US-10)', () => {
     expect(await within(breakfast).findByText('Oatmeal, 80 g, 300 kcal')).toBeInTheDocument();
     expect(within(breakfast).getByText('300 kcal')).toBeInTheDocument();
     expect(screen.getByText('Total: 300 kcal')).toBeInTheDocument();
+    expect(screen.getByText('2700 kcal Remaining')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Protein progress' })).toHaveAttribute('value', '10');
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/meals',
       expect.objectContaining({
@@ -155,6 +160,8 @@ describe('logging portions (US-10)', () => {
     fireEvent.click(within(breakfast).getByRole('button', { name: 'Delete Oatmeal' }));
 
     expect(await screen.findByText('Total: 0 kcal')).toBeInTheDocument();
+    expect(screen.getByText('3000 kcal Remaining')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Protein progress' })).toHaveAttribute('value', '0');
     expect(within(breakfast).queryByText('Oatmeal, 80 g, 300 kcal')).not.toBeInTheDocument();
     expect(within(breakfast).getByText('0 kcal')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/meals/1', expect.objectContaining({ method: 'DELETE' }));
@@ -165,7 +172,9 @@ describe('logging portions (US-10)', () => {
 function emptyDay(date: string) {
   return {
     date,
-    consumed: { caloriesKcal: 0 },
+    consumed: { caloriesKcal: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+    targets: { caloriesKcal: 3000, proteinG: 140, carbsG: 450, fatG: 70 },
+    remaining: { caloriesKcal: 3000, proteinG: 140, carbsG: 450, fatG: 70 },
     meals: ['breakfast', 'lunch', 'dinner', 'snack'].map((mealType) => ({
       mealType,
       entries: [],
