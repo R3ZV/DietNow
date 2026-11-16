@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/dietnow/backend/internal/models"
 	"gorm.io/gorm"
@@ -26,7 +27,7 @@ func (r *FoodRepository) Search(ctx context.Context, userID uint, nameLike strin
 	var foods []models.Food
 	err := r.db.WithContext(ctx).
 		Scopes(VisibleFoodsFor(userID)).
-		Where("name ILIKE ?", "%"+nameLike+"%").
+		Where("name ILIKE ?", "%"+escapeLike(nameLike)+"%").
 		Order("is_verified DESC, name ASC").
 		Limit(limit).
 		Find(&foods).Error
@@ -78,6 +79,12 @@ func (r *FoodRepository) UpdatePrivate(ctx context.Context, userID, foodID uint,
 	}
 	return nil
 }
+
+// likeEscaper escapes LIKE wildcards so user input such as "100%" or "a_b"
+// matches literally. PostgreSQL's default LIKE escape character is backslash.
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
+func escapeLike(s string) string { return likeEscaper.Replace(s) }
 
 // DeletePrivate soft-deletes a food the user owns. Global foods are untouchable.
 func (r *FoodRepository) DeletePrivate(ctx context.Context, userID, foodID uint) error {

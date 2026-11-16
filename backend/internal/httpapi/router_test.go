@@ -78,7 +78,7 @@ func TestReady(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rec := do(t, newTestRouter(Deps{DB: tt.db}), http.MethodGet, "/api/health/ready", nil)
+			rec := do(t, newTestRouter(Deps{Pinger: tt.db}), http.MethodGet, "/api/health/ready", nil)
 			if rec.Code != tt.wantCode {
 				t.Fatalf("status = %d, want %d (body %s)", rec.Code, tt.wantCode, rec.Body)
 			}

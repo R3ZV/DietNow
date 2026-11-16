@@ -83,11 +83,16 @@ readiness returns `503`), so the frontend can be developed without Docker.
 | Build | `go build -o bin/api ./cmd/api` | `npm run build` (output in `dist/`) |
 | Lint / static checks | `go vet ./...` and `gofmt -l .` (must print nothing) | `npm run lint` |
 | Type check | (part of `go build` / `go vet`) | `npm run typecheck` |
-| Tests | `go test ./...` | `npm test` |
+| Tests | `go test ./...` (integration tests need the DB; see [backend/README.md](backend/README.md#tests)) | `npm test` |
 | DB migrate / seed | `go run ./cmd/migrate` / `go run ./cmd/seed` | – |
+| Smoke test a running instance | `SMOKE_EMAIL=… SMOKE_PASSWORD=… go run ./cmd/smoke -base-url http://localhost:8080 -register` | – |
+| Release image (API + frontend) | `docker build -t dietnow .` (repo root) | – |
 
-The same checks run in CI on every push and pull request
-(`.github/workflows/ci.yml`).
+The same checks, plus PostgreSQL integration tests and a smoke test of the
+built Docker image, run in CI on every pull request and push to `master`
+(`.github/workflows/ci.yml`). Green `master` builds deploy to **staging** on
+Render; hosting, secrets, migrations, deploy and rollback are documented in
+👉 **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ### Configuration
 
@@ -95,9 +100,12 @@ The same checks run in CI on every push and pull request
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `APP_ENV` | `development` | `development` or `production` |
-| `API_PORT` | `8080` | Port the API listens on |
+| `APP_ENV` | `development` | `development`, `test`, `staging` or `production` (the last two enable strict startup checks) |
+| `API_PORT` | `8080` | Port the API listens on (`PORT`, set by hosting platforms, wins) |
 | `API_ALLOWED_ORIGINS` | *(empty)* | Comma-separated origins allowed for CORS; leave empty when using the Vite proxy |
+| `STATIC_DIR` | *(empty)* | Serve the built frontend from this directory (set in the Docker image) |
+| `DB_AUTO_MIGRATE` | `true` | Apply migrations + food catalog at startup |
+| `SESSION_*`, `COOKIE_*`, `BCRYPT_COST` | see `.env.example` | Sessions & password hashing ([backend/AUTH.md](backend/AUTH.md)) |
 | `DB_HOST`, `DB_PORT` | `localhost`, `5432` | PostgreSQL address (Docker publishes it on `DB_PORT`) |
 | `DB_USER`, `DB_PASSWORD`, `DB_NAME` | `dietnow`, –, `dietnow` | Credentials; Docker creates the database with these |
 | `DB_SSLMODE` | `disable` | Use `require` for hosted databases |

@@ -1,6 +1,9 @@
-// Command migrate runs GORM AutoMigrate against the configured database.
+// Command migrate applies the database schema (GORM AutoMigrate) and the
+// reference food catalog. It is idempotent and additive, so it is safe to run
+// on every deploy.
 //
-//	go run ./cmd/migrate
+//	go run ./cmd/migrate            (locally, reads backend/.env)
+//	/app/migrate                    (inside the release image)
 package main
 
 import (
@@ -16,6 +19,9 @@ func main() {
 	}
 	if err := database.Migrate(db); err != nil {
 		log.Fatalf("migrate: %v", err)
+	}
+	if err := database.SeedFoodCatalog(db); err != nil {
+		log.Fatalf("seed food catalog: %v", err)
 	}
 	log.Println("migration complete")
 }

@@ -15,11 +15,13 @@ backend/
 ├── go.mod
 ├── cmd/
 │   ├── api/main.go             # `go run ./cmd/api`      -> HTTP API on :8080
-│   ├── migrate/main.go         # `go run ./cmd/migrate`  -> AutoMigrate
-│   └── seed/main.go            # `go run ./cmd/seed`      -> migrate + seed
+│   ├── migrate/main.go         # `go run ./cmd/migrate`  -> AutoMigrate + food catalog
+│   ├── seed/main.go            # `go run ./cmd/seed`      -> migrate + demo data
+│   └── smoke/main.go           # `go run ./cmd/smoke`     -> MVP smoke test vs. a URL
 └── internal/
-    ├── config/                 # API_* settings from env
-    ├── httpapi/                # router, middleware, JSON helpers, handlers
+    ├── config/                 # server settings from env (port, env, origins, static dir)
+    ├── nutrition/              # calorie engine: validation, BMR/TDEE, surplus, macros
+    ├── smoke/                  # the MVP smoke flow (used by tests, CI and deploys)
     ├── models/                 # GORM structs & relations
     │   ├── enums.go            # Gender, Goal, ActivityLevel, MealType
     │   ├── localdate.go        # timezone-safe calendar DATE type
@@ -37,6 +39,7 @@ backend/
     │   └── seed.go             # SeedDatabase(db) — idempotent
     └── repository/             # ownership-enforcing data access
         ├── scopes.go           # OwnedBy / VisibleFoodsFor GORM scopes
+        ├── profile_repository.go
         ├── meal_entry_repository.go
         ├── food_repository.go
         └── weight_log_repository.go
@@ -53,28 +56,55 @@ docker compose up -d            # start PostgreSQL (data persists in volume diet
 go mod tidy                     # resolve dependencies
 go run ./cmd/seed               # migrate the schema + insert the test dataset
 go run ./cmd/api                # serve the API on http://localhost:8080
+go test ./...                   # unit tests; integration tests need the database
 ```
 
 Check it: `curl http://localhost:8080/api/health` (liveness) and
 `curl http://localhost:8080/api/health/ready` (`200` only when PostgreSQL answers).
 
+Authentication, sessions and their env vars are documented in [AUTH.md](AUTH.md);
+staging hosting, migrations, deploy and rollback in
+[docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).
+
 ## HTTP API
 
 Routes are registered in `internal/httpapi/router.go` using Go 1.22 `ServeMux`
-patterns (`"GET /api/meal-entries/{id}"`). Handlers reply with
+patterns (`"DELETE /api/meals/{id}"`). Handlers reply with
 `httpapi.WriteJSON` / `httpapi.WriteError`, which produce the standard error
-envelope `{"error":{"code":"...","message":"..."}}` — see
-[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for the full conventions.
-To add a feature, put its repository in `httpapi.Deps`, construct it in
-`cmd/api/main.go`, and register the routes in `NewRouter`.
+envelope `{"error":{"code":"...","message":"..."}}` (validation errors add
+`"fields": {"heightCm": "..."}`) — see
+[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for the endpoint list and
+conventions. To add a feature, add its repository to `server` in `router.go`
+and register the routes in `registerAppRoutes`.
 
 Checks: `go vet ./...`, `gofmt -l .` (must print nothing), `go test ./...`.
-go run ./cmd/api                # start the API on :8080
-go test ./...                   # tests (need the database running)
+
+## Tests
+
+| Kind | Where | Needs DB |
+|------|-------|----------|
+| Unit: calorie engine (backlog examples US-04/05/06, validation and portion boundaries) | `internal/nutrition` | no |
+| Unit: config, router, health, CORS, dotenv | `internal/config`, `internal/httpapi/router_test.go`, … | no |
+| Integration: auth & sessions | `internal/httpapi/auth_integration_test.go` | yes |
+| Integration: **MVP flow**, user isolation, calculation / portion / search boundaries | `internal/httpapi/mvp_integration_test.go` | yes |
+| Smoke test against a running deployment | `go run ./cmd/smoke` (`internal/smoke`) | via the server |
+
+Integration tests skip when PostgreSQL is unreachable, unless
+`DIETNOW_REQUIRE_DB=1` is set (CI sets it so they can never be silently
+skipped). To run them against a throwaway database instead of your dev one:
+
+```bash
+docker run -d --rm --name dietnow-test-pg -p 55432:5432 \
+  -e POSTGRES_USER=dietnow -e POSTGRES_PASSWORD=test -e POSTGRES_DB=dietnow postgres:16-alpine
+DB_PORT=55432 DB_PASSWORD=test DIETNOW_REQUIRE_DB=1 go test -count=1 ./...
 ```
 
-Authentication, sessions and the env vars for local/staging are documented in
-[AUTH.md](AUTH.md).
+Smoke-test any running instance (local, Docker, staging):
+
+```bash
+SMOKE_EMAIL=smoke@example.com SMOKE_PASSWORD='a-long-password' \
+  go run ./cmd/smoke -base-url http://localhost:8080 -register
+```
 
 Seed login: `test@dietnow.app` / `Password123!`.
 

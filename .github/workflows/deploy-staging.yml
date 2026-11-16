@@ -1,0 +1,201 @@
+name: Deploy staging
+
+# Deploys one immutable image (ghcr.io/<owner>/dietnow:<git sha>) to the Render
+# staging service, verifies it, and rolls back automatically if verification
+# fails. See docs/DEPLOYMENT.md.
+#
+# - Automatic: after CI succeeds on a push to master (once the repository
+#   variable STAGING_DEPLOY_ENABLED is "true").
+# - Manual / rollback: Actions -> "Deploy staging" -> Run workflow, optionally
+#   with the commit SHA to deploy (any earlier deployed SHA = rollback).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Full commit SHA to deploy (empty = latest master). Use a previously deployed SHA to roll back."
+        required: false
+        default: ""
+      build_only:
+        description: "Only build and push the image (first-time setup, before the Render service exists)."
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+# Never run two deployments at once; queue them instead.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.STAGING_DEPLOY_ENABLED == 'true' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    env:
+      STAGING_URL: ${{ vars.STAGING_URL }}
+    steps:
+      - name: Resolve commit to deploy
+        id: target
+        env:
+          INPUT_SHA: ${{ github.event.inputs.sha }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          sha="${INPUT_SHA:-${RUN_SHA:-$GITHUB_SHA}}"
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::'$sha' is not a full 40-character commit SHA"; exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${OWNER,,}/dietnow" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.sha }}
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # A rollback redeploys the exact image that was tested before; only
+      # commits that were never built get a new image.
+      - name: Build and push image (if not already built)
+        env:
+          IMAGE: ${{ steps.target.outputs.image }}
+          SHA: ${{ steps.target.outputs.sha }}
+          EVENT: ${{ github.event_name }}
+          BUILD_ONLY: ${{ github.event.inputs.build_only }}
+        run: |
+          if docker manifest inspect "$IMAGE:$SHA" >/dev/null 2>&1; then
+            echo "Image $IMAGE:$SHA already exists, reusing it."
+          else
+            docker build --build-arg VERSION="$SHA" -t "$IMAGE:$SHA" .
+            docker push "$IMAGE:$SHA"
+          fi
+          # ':master' tracks the latest master build; the Render blueprint uses
+          # it as the initial image. Rollbacks never move it.
+          if [ "$EVENT" = "workflow_run" ] || [ "$BUILD_ONLY" = "true" ]; then
+            docker pull -q "$IMAGE:$SHA" >/dev/null
+            docker tag "$IMAGE:$SHA" "$IMAGE:master" && docker push -q "$IMAGE:master"
+          fi
+          echo "### Image: \`$IMAGE:$SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check staging configuration
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$HOOK" ] || missing="$missing RENDER_DEPLOY_HOOK_URL(secret)"
+          [ -n "$SMOKE_EMAIL" ] || missing="$missing SMOKE_EMAIL(secret)"
+          [ -n "$SMOKE_PASSWORD" ] || missing="$missing SMOKE_PASSWORD(secret)"
+          [ -n "$STAGING_URL" ] || missing="$missing STAGING_URL(variable)"
+          if [ -n "$missing" ]; then
+            echo "::error::Configure the 'staging' environment in GitHub first:$missing (see docs/DEPLOYMENT.md)"; exit 1
+          fi
+
+      - name: Record the currently deployed version (rollback target)
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        id: previous
+        run: |
+          prev=$(curl -fsS --max-time 90 "$STAGING_URL/api/health" | jq -r '.version // empty' || true)
+          [[ "$prev" =~ ^[0-9a-f]{40}$ ]] || prev=""
+          echo "Currently deployed: ${prev:-unknown}"
+          echo "version=$prev" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Render deploy
+        id: trigger
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE: ${{ steps.target.outputs.image }}
+          SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          img=$(jq -rn --arg v "$IMAGE:$SHA" '$v|@uri')
+          curl -fsS -X POST "$HOOK&imgURL=$img" -o /dev/null
+          echo "Deploy of $SHA requested."
+
+      - name: Wait until staging serves the new version
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        env:
+          SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          # Render builds nothing (the image is prebuilt), but pulling, the
+          # health check and a free-tier cold start can take a few minutes.
+          for i in $(seq 1 60); do
+            v=$(curl -fsS --max-time 20 "$STAGING_URL/api/health" | jq -r '.version // empty' || true)
+            echo "attempt $i: serving ${v:-<no answer>}"
+            [ "$v" = "$SHA" ] && exit 0
+            sleep 15
+          done
+          echo "::error::staging did not report version $SHA within 15 minutes"; exit 1
+
+      - name: Verify health and readiness
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        run: |
+          curl -fsS "$STAGING_URL/api/health" | tee /dev/stderr | jq -e '.status == "ok"' >/dev/null
+          curl -fsS "$STAGING_URL/api/health/ready" | tee /dev/stderr | jq -e '.database == "up"' >/dev/null
+
+      - uses: actions/setup-go@v5
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Smoke test with the non-production account
+        if: ${{ github.event.inputs.build_only != 'true' }}
+        working-directory: backend
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          SHA: ${{ steps.target.outputs.sha }}
+        run: go run ./cmd/smoke -base-url "$STAGING_URL" -register -expect-version "$SHA" -timeout 5m
+
+      - name: Summary
+        if: ${{ success() && github.event.inputs.build_only != 'true' }}
+        env:
+          SHA: ${{ steps.target.outputs.sha }}
+          PREV: ${{ steps.previous.outputs.version }}
+        run: |
+          {
+            echo "### ✅ Staging is running \`$SHA\`"
+            echo "- URL: $STAGING_URL"
+            echo "- Health, readiness and smoke test passed"
+            echo "- Previous version: \`${PREV:-none}\` — to roll back, run this workflow with that SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Automatic rollback: if anything after the deploy failed, put the
+      # previously verified image back and wait until it is serving.
+      - name: Roll back to the previous version
+        if: ${{ failure() && steps.trigger.outcome == 'success' && steps.previous.outputs.version != '' && steps.previous.outputs.version != steps.target.outputs.sha }}
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE: ${{ steps.target.outputs.image }}
+          PREV: ${{ steps.previous.outputs.version }}
+        run: |
+          echo "::warning::Verification failed; rolling staging back to $PREV"
+          img=$(jq -rn --arg v "$IMAGE:$PREV" '$v|@uri')
+          curl -fsS -X POST "$HOOK&imgURL=$img" -o /dev/null
+          for _ in $(seq 1 60); do
+            v=$(curl -fsS --max-time 20 "$STAGING_URL/api/health" | jq -r '.version // empty' || true)
+            [ "$v" = "$PREV" ] && { echo "### ↩️ Rolled back to \`$PREV\`" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+            sleep 15
+          done
+          echo "::error::rollback to $PREV did not become healthy; check the Render dashboard"; exit 1

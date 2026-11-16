@@ -6,9 +6,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -41,10 +45,18 @@ func setup(t *testing.T) *env {
 	dbCfg.LogLevel = logger.Silent
 	db, err := database.Connect(dbCfg)
 	if err != nil {
+		// CI sets DIETNOW_REQUIRE_DB=1 so a missing database fails the build
+		// instead of silently skipping every integration test.
+		if os.Getenv("DIETNOW_REQUIRE_DB") != "" {
+			t.Fatalf("database unavailable: %v", err)
+		}
 		t.Skipf("database unavailable (run `docker compose up -d`): %v", err)
 	}
 	if err := database.Migrate(db); err != nil {
 		t.Fatalf("migrate: %v", err)
+	}
+	if err := database.SeedFoodCatalog(db); err != nil {
+		t.Fatalf("seed food catalog: %v", err)
 	}
 	cfg := auth.Config{
 		SessionTTL:  time.Hour,
@@ -56,7 +68,13 @@ func setup(t *testing.T) *env {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := httptest.NewServer(httpapi.New(db, svc, httpapi.Options{AllowedOrigins: []string{allowedOrig}}))
+	srv := httptest.NewServer(httpapi.NewRouter(httpapi.Deps{
+		Logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+		DB:             db,
+		Auth:           svc,
+		Version:        "test",
+		AllowedOrigins: []string{allowedOrig},
+	}))
 	t.Cleanup(srv.Close)
 	return &env{t: t, db: db, srv: srv, cfg: cfg}
 }
@@ -110,6 +128,13 @@ func (c *client) register(email string) uint {
 	res, body := c.do("POST", "/api/auth/register", map[string]string{"email": email, "password": testPassword})
 	expectStatus(c.e.t, res, http.StatusCreated, body)
 	return uint(body["user"].(map[string]any)["id"].(float64))
+}
+
+// errorCode extracts error.code from the standard error envelope.
+func errorCode(body map[string]any) string {
+	e, _ := body["error"].(map[string]any)
+	code, _ := e["code"].(string)
+	return code
 }
 
 func expectStatus(t *testing.T, res *http.Response, want int, body map[string]any) {
@@ -217,7 +242,7 @@ func TestLoginValidAndInvalid(t *testing.T) {
 	}
 	res, unknown := c.do("POST", "/api/auth/login", map[string]string{"email": "nobody-" + email, "password": testPassword})
 	expectStatus(t, res, http.StatusUnauthorized, unknown)
-	if wrongPw["error"] != unknown["error"] {
+	if !reflect.DeepEqual(wrongPw["error"], unknown["error"]) {
 		t.Errorf("error messages differ, enabling account enumeration: %v vs %v", wrongPw, unknown)
 	}
 	res, body := c.do("GET", "/api/auth/me", nil)
@@ -237,10 +262,15 @@ func TestUnauthenticatedRequestsAreRejected(t *testing.T) {
 		{"GET", "/api/meals?date=2026-11-08"},
 		{"DELETE", "/api/meals/1"},
 		{"GET", "/api/weights?from=2026-11-01&to=2026-11-08"},
+		{"GET", "/api/profile"},
+		{"PUT", "/api/profile"},
+		{"GET", "/api/foods?q=oats"},
+		{"POST", "/api/meals"},
+		{"GET", "/api/daily-summary"},
 	} {
 		res, body := c.do(p.method, p.path, nil)
 		expectStatus(t, res, http.StatusUnauthorized, body)
-		if body["error"] != "unauthenticated" || res.Header.Get("Content-Type") != "application/json" {
+		if errorCode(body) != "unauthenticated" || !strings.HasPrefix(res.Header.Get("Content-Type"), "application/json") {
 			t.Errorf("%s %s: unexpected 401 body %v", p.method, p.path, body)
 		}
 	}

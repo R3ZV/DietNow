@@ -1,25 +1,57 @@
 name: CI
 
+# Runs on every pull request and on every push to the default branch.
+# A green run on master triggers the staging deployment (deploy-staging.yml).
 on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   backend:
-    name: Backend (Go)
+    name: Backend (Go) — lint, build, unit + integration tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dietnow
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: dietnow
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dietnow -d dietnow"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      GOFLAGS: -mod=readonly # fail if go.mod/go.sum would need changes
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: dietnow
+      DB_PASSWORD: ci_password
+      DB_NAME: dietnow
+      DB_SSLMODE: disable
+      DB_LOG_LEVEL: silent
+      # Integration tests skip without a database locally; in CI they must run.
+      DIETNOW_REQUIRE_DB: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
-      - name: Download dependencies
-        run: go mod download
+      - name: Download and verify locked dependencies
+        run: go mod download && go mod verify
       - name: gofmt
         run: |
           unformatted=$(gofmt -l .)
@@ -28,13 +60,13 @@ jobs:
           fi
       - name: go vet
         run: go vet ./...
-      - name: Test
-        run: go test ./...
       - name: Build
-        run: go build -o bin/api ./cmd/api
+        run: go build ./... && go build -o bin/api ./cmd/api
+      - name: Test (unit + PostgreSQL integration, incl. MVP flow)
+        run: go test -count=1 -race ./...
 
   frontend:
-    name: Frontend (React)
+    name: Frontend (React) — lint, typecheck, test, build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,3 +83,49 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: Release image — build + smoke test
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dietnow
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: dietnow
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dietnow -d dietnow"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Build the release image (same Dockerfile as staging)
+        run: docker build --build-arg VERSION=${{ github.sha }} -t dietnow:ci .
+      - name: Start the image against PostgreSQL
+        run: |
+          docker run -d --name dietnow --network host \
+            -e APP_ENV=test -e API_PORT=8080 \
+            -e DB_HOST=localhost -e DB_USER=dietnow -e DB_PASSWORD=ci_password -e DB_NAME=dietnow \
+            dietnow:ci
+          for _ in $(seq 1 30); do
+            curl -fsS http://localhost:8080/api/health/ready && exit 0
+            sleep 2
+          done
+          docker logs dietnow; exit 1
+      - name: Smoke test (auth, intake, targets, food lookup, logging, totals)
+        working-directory: backend
+        env:
+          SMOKE_EMAIL: ci-smoke@example.com
+          SMOKE_PASSWORD: ci-smoke-password
+        run: go run ./cmd/smoke -base-url http://localhost:8080 -register -expect-version ${{ github.sha }}
+      - name: Frontend is served by the image
+        run: curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+      - name: Container logs
+        if: always()
+        run: docker logs dietnow || true
