@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 /** Opt into React Router v7 behaviour now so the later upgrade is a no-op. */
 export const routerFutureFlags = {
@@ -25,6 +26,7 @@ export const routes: RouteObject[] = [
     element: <Layout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'register', element: <RegisterPage /> },
       {
         path: 'tracker',
         element: (
