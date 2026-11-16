@@ -2,8 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { errorMessage } from '../api/client';
 import { searchFoods, type Food } from '../api/foods';
 
-/** Searches the food database by name and lists each match with its nutrition per 100 g (US-09). */
-export function FoodSearch() {
+/**
+ * Searches the food database by name and lists each match with its nutrition per 100 g (US-09).
+ * Clicking a match hands that food to `onSelect` (US-10).
+ */
+export function FoodSearch({ onSelect }: { onSelect: (food: Food) => void }) {
   const [query, setQuery] = useState('');
   // null until the first search, so "no matches" is not shown before the user searched.
   const [foods, setFoods] = useState<Food[] | null>(null);
@@ -47,11 +50,16 @@ export function FoodSearch() {
       )}
       {foods?.length === 0 && <p className="muted">No foods found.</p>}
       <ul>
-        {foods?.map(({ id, name, nutrition: n }) => (
-          <li key={id}>
-            {`${name}: ${n.caloriesKcal} kcal, ${n.proteinG} g protein, ${n.carbsG} g carbs, ${n.fatG} g fat per 100 g`}
-          </li>
-        ))}
+        {foods?.map((food) => {
+          const n = food.nutrition;
+          return (
+            <li key={food.id}>
+              <button type="button" onClick={() => onSelect(food)}>
+                {`${food.name}: ${n.caloriesKcal} kcal, ${n.proteinG} g protein, ${n.carbsG} g carbs, ${n.fatG} g fat per 100 g`}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
