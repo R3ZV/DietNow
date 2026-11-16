@@ -6,6 +6,7 @@ import { TrackerPage } from './TrackerPage';
 function summary(date: string, foodName = 'Oatmeal') {
   return {
     date,
+    consumed: { caloriesKcal: 300 },
     meals: [
       {
         mealType: 'breakfast',
@@ -102,5 +103,14 @@ describe('adding food from the tracker (US-09)', () => {
     ).toBeInTheDocument();
     // Only the tapped meal gets a search box.
     expect(screen.getAllByLabelText('Search food')).toHaveLength(1);
+  });
+});
+
+describe('logging portions (US-10)', () => {
+  it("shows the day's calorie total", async () => {
+    mockFetch(200, summary('2026-11-16'));
+    renderPage('/tracker', <TrackerPage />);
+
+    expect(await screen.findByText('Total: 300 kcal')).toBeInTheDocument();
   });
 });
