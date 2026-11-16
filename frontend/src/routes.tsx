@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { TrackerPage } from './pages/TrackerPage';
 
 /** Opt into React Router v7 behaviour now so the later upgrade is a no-op. */
 export const routerFutureFlags = {
@@ -29,15 +30,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <HomePage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'login', element: <LoginPage /> },
-      {
-        path: 'tracker',
-        element: (
-          <PlaceholderPage
-            title="Daily Tracker"
-            description="Breakfast, lunch, dinner and snacks with live calorie and macro totals."
-          />
-        ),
-      },
+      { path: 'tracker', element: <TrackerPage /> },
       {
         path: 'chat',
         element: (
