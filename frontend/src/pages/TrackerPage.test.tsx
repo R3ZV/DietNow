@@ -53,6 +53,21 @@ describe('tracker page (US-08)', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/daily-summary?date=2026-11-15', expect.anything());
   });
 
+  it('clears an old error once another day loads', async () => {
+    mockFetch(200, summary('2026-11-16'));
+    renderPage('/tracker', <TrackerPage />);
+    const dateInput = await screen.findByLabelText('Date');
+
+    mockFetch(500, { error: { code: 'internal', message: 'something went wrong' } });
+    fireEvent.change(dateInput, { target: { value: '2026-11-15' } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('something went wrong');
+
+    mockFetch(200, summary('2026-11-14', 'Eggs'));
+    fireEvent.change(dateInput, { target: { value: '2026-11-14' } });
+    expect(await screen.findByText('Eggs, 80 g, 300 kcal')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('sends a logged-out visitor to the login page', async () => {
     mockFetch(401, { error: { code: 'unauthenticated', message: 'authentication required' } });
     renderPage('/tracker', <TrackerPage />);
