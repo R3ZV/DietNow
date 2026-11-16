@@ -12,8 +12,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       // Forward /api/* to the Go server so the browser only talks to one origin.
+      // Keep the Host header (no changeOrigin): the API blocks a POST whose
+      // Origin differs from the Host it was sent to.
       proxy: {
-        '/api': { target: apiTarget, changeOrigin: true },
+        '/api': { target: apiTarget },
       },
     },
     test: {
