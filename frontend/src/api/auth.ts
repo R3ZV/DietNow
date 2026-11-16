@@ -31,3 +31,8 @@ function postCredentials(path: string, credentials: Credentials) {
     body: JSON.stringify(credentials),
   });
 }
+
+/** Restores the current session from the browser's HttpOnly cookie. */
+export const getSession = () => apiFetch<AuthResponse>('/auth/me');
+
+export const logout = () => apiFetch<void>('/auth/logout', { method: 'POST' });

@@ -1,3 +1,4 @@
+import { AuthProvider } from './auth/AuthProvider';
 import type { RouteObject } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProfilePage } from './pages/ProfilePage';
@@ -26,7 +27,7 @@ export const providerFutureFlags = { v7_startTransition: true } as const;
 export const routes: RouteObject[] = [
   {
     path: '/',
-    element: <Layout />,
+    element: <AuthProvider><Layout /></AuthProvider>,
     children: [
       { index: true, element: <HomePage /> },
       { path: 'register', element: <RegisterPage /> },

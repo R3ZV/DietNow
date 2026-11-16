@@ -16,7 +16,7 @@ describe('register page (US-19 scenario 1)', () => {
     submitRegistration('ana@example.com', 'short');
 
     expect(screen.getByRole('alert')).toHaveTextContent('Password must be at least 8 characters.');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/auth/register', expect.anything());
   });
 
   it('creates the account and opens the daily tracker', async () => {

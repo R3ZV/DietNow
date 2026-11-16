@@ -1,4 +1,5 @@
 // Helpers shared by the frontend tests.
+import { AuthProvider } from '../auth/AuthProvider';
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import {
@@ -32,10 +33,10 @@ export function renderAt(path: string) {
 export function renderPage(path: string, page: ReactElement) {
   return render(
     <MemoryRouter initialEntries={[path]} future={{ ...providerFutureFlags, v7_relativeSplatPath: true }}>
-      <Routes>
+      <AuthProvider><Routes>
         <Route path={path} element={page} />
         <Route path="*" element={<CurrentPath />} />
-      </Routes>
+      </Routes></AuthProvider>
     </MemoryRouter>,
   );
 }
@@ -48,9 +49,9 @@ function CurrentPath() {
 export function mockFetch(status: number, body: unknown) {
   // A fresh Response per call: a response body can be read only once.
   const fetchMock = vi.fn(
-    async () =>
-      new Response(JSON.stringify(body), {
-        status,
+    async (url: string) =>
+      new Response(JSON.stringify(url === '/api/auth/me' ? { error: { code: 'unauthorized' } } : body), {
+        status: url === '/api/auth/me' ? 401 : status,
         headers: { 'Content-Type': 'application/json' },
       }),
   );

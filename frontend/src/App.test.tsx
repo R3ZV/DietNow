@@ -33,22 +33,27 @@ describe('app routing and layout', () => {
     ['/register', /create account/i],
     ['/login', /log in/i],
   ])('routes %s to its page', async (path, heading) => {
+    mockFetch(401, {});
     if (path === '/profile') mockFetch(404, { error: { code: 'profile_not_found' } });
     renderAt(path);
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    await screen.findByRole('link', { name: 'Log in' });
     if (path === '/profile') await waitFor(() => expect(screen.getByRole('button', { name: 'Save profile' })).toBeInTheDocument());
   });
 
-  it('links to the login and registration pages from the header (US-19)', () => {
+  it('links to the login and registration pages from the header (US-19)', async () => {
+    mockFetch(401, {});
     renderAt('/tracker');
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
 
-    expect(nav.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(await nav.findByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
     expect(nav.getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register');
   });
 
-  it('renders a not-found page for unknown routes', () => {
+  it('renders a not-found page for unknown routes', async () => {
+    mockFetch(401, {});
     renderAt('/nope');
     expect(screen.getByRole('heading', { level: 1, name: /page not found/i })).toBeInTheDocument();
+    await screen.findByRole('link', { name: 'Log in' });
   });
 });
