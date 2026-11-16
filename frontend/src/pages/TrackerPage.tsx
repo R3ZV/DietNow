@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ApiError } from '../api/client';
 import { getDailySummary, type DailySummary, type MealType } from '../api/tracker';
 
 const mealLabels: Record<MealType, string> = {
@@ -10,6 +12,7 @@ const mealLabels: Record<MealType, string> = {
 
 /** The daily tracker (US-08): one day's four meals, each with its foods and calorie subtotal. */
 export function TrackerPage() {
+  const navigate = useNavigate();
   // Unset until the user picks a day; the backend then shows today in the user's time zone.
   const [date, setDate] = useState<string>();
   const [summary, setSummary] = useState<DailySummary | null>(null);
@@ -21,12 +24,15 @@ export function TrackerPage() {
     getDailySummary(date)
       .then((day) => !cancelled && setSummary(day))
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (cancelled) return;
+        // replace: Back from the login page must not land here and redirect again.
+        if (err instanceof ApiError && err.status === 401) navigate('/login', { replace: true });
+        else setError(err instanceof Error ? err.message : String(err));
       });
     return () => {
       cancelled = true;
     };
-  }, [date]);
+  }, [date, navigate]);
 
   return (
     <section>
