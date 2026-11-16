@@ -24,11 +24,11 @@ const (
 type ActivityLevel string
 
 const (
-	ActivitySedentary   ActivityLevel = "sedentary"    // little/no exercise
-	ActivityLight        ActivityLevel = "light"        // 1-3 days/week
-	ActivityModerate     ActivityLevel = "moderate"     // 3-5 days/week
-	ActivityVery         ActivityLevel = "very"         // 6-7 days/week
-	ActivityExtra        ActivityLevel = "extra"        // hard training / physical job
+	ActivitySedentary ActivityLevel = "sedentary" // little/no exercise
+	ActivityLight     ActivityLevel = "light"     // 1-3 days/week
+	ActivityModerate  ActivityLevel = "moderate"  // 3-5 days/week
+	ActivityVery      ActivityLevel = "very"      // 6-7 days/week
+	ActivityExtra     ActivityLevel = "extra"     // hard training / physical job
 )
 
 // MealType corresponds to the four daily tracker sections.
