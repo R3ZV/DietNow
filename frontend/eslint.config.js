@@ -22,4 +22,9 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // Fast refresh never reloads test code, so its export rule does not apply there.
+    files: ['src/test/**', '**/*.test.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 );
