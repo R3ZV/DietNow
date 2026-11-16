@@ -14,10 +14,12 @@ backend/
 ├── AUTH.md                     # authentication & sessions design
 ├── go.mod
 ├── cmd/
-│   ├── api/main.go             # `go run ./cmd/api`      -> HTTP API
+│   ├── api/main.go             # `go run ./cmd/api`      -> HTTP API on :8080
 │   ├── migrate/main.go         # `go run ./cmd/migrate`  -> AutoMigrate
 │   └── seed/main.go            # `go run ./cmd/seed`      -> migrate + seed
 └── internal/
+    ├── config/                 # API_* settings from env
+    ├── httpapi/                # router, middleware, JSON helpers, handlers
     ├── models/                 # GORM structs & relations
     │   ├── enums.go            # Gender, Goal, ActivityLevel, MealType
     │   ├── localdate.go        # timezone-safe calendar DATE type
@@ -50,6 +52,23 @@ docker compose up -d            # start PostgreSQL (data persists in volume diet
 
 go mod tidy                     # resolve dependencies
 go run ./cmd/seed               # migrate the schema + insert the test dataset
+go run ./cmd/api                # serve the API on http://localhost:8080
+```
+
+Check it: `curl http://localhost:8080/api/health` (liveness) and
+`curl http://localhost:8080/api/health/ready` (`200` only when PostgreSQL answers).
+
+## HTTP API
+
+Routes are registered in `internal/httpapi/router.go` using Go 1.22 `ServeMux`
+patterns (`"GET /api/meal-entries/{id}"`). Handlers reply with
+`httpapi.WriteJSON` / `httpapi.WriteError`, which produce the standard error
+envelope `{"error":{"code":"...","message":"..."}}` — see
+[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for the full conventions.
+To add a feature, put its repository in `httpapi.Deps`, construct it in
+`cmd/api/main.go`, and register the routes in `NewRouter`.
+
+Checks: `go vet ./...`, `gofmt -l .` (must print nothing), `go test ./...`.
 go run ./cmd/api                # start the API on :8080
 go test ./...                   # tests (need the database running)
 ```

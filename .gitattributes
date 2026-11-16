@@ -1,0 +1,7 @@
+# Always check out text files with LF so `gofmt -l` and Prettier/ESLint agree
+# on every OS (Windows `core.autocrlf=true` would otherwise convert to CRLF).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary

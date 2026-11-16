@@ -68,11 +68,11 @@ func (r *MealEntryRepository) UpdatePortion(ctx context.Context, userID, entryID
 		Scopes(OwnedBy(userID)).
 		Where("id = ?", entryID).
 		Updates(map[string]any{
-			"portion_grams":       grams,
-			"snap_calories_kcal":  snap.CaloriesKcal,
-			"snap_protein_g":      snap.ProteinG,
-			"snap_carbs_g":        snap.CarbsG,
-			"snap_fat_g":          snap.FatG,
+			"portion_grams":      grams,
+			"snap_calories_kcal": snap.CaloriesKcal,
+			"snap_protein_g":     snap.ProteinG,
+			"snap_carbs_g":       snap.CarbsG,
+			"snap_fat_g":         snap.FatG,
 		})
 	if res.Error != nil {
 		return res.Error

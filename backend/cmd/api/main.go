@@ -1,4 +1,10 @@
 // Command api runs the DietNow HTTP API.
+//
+//	go run ./cmd/api
+//
+// It serves JSON under /api (see docs/ARCHITECTURE.md). If PostgreSQL is not
+// reachable at startup the server still starts, so the liveness endpoint works,
+// and GET /api/health/ready reports the database as unavailable.
 package main
 
 import (
