@@ -48,10 +48,13 @@ export function TrackerPage() {
     <section>
       <h1>Daily Tracker</h1>
       {summary && (
-        <label>
-          Date{' '}
-          <input type="date" value={date || summary.date} onChange={(e) => setDate(e.target.value)} />
-        </label>
+        <>
+          <label>
+            Date{' '}
+            <input type="date" value={date || summary.date} onChange={(e) => setDate(e.target.value)} />
+          </label>
+          <p>Total: {Math.round(summary.consumed.caloriesKcal)} kcal</p>
+        </>
       )}
       {error && (
         <p role="alert" className="status-error">

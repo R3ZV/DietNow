@@ -13,6 +13,8 @@ export interface MealEntry {
 export interface DailySummary {
   /** The day shown, YYYY-MM-DD. */
   date: string;
+  /** The whole day, all four meals together. */
+  consumed: { caloriesKcal: number };
   /** Always the four meals, in this order: breakfast, lunch, dinner, snack. */
   meals: { mealType: MealType; entries: MealEntry[]; subtotal: { caloriesKcal: number } }[];
 }
