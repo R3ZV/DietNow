@@ -46,11 +46,13 @@ function CurrentPath() {
 
 /** Replaces the global fetch so every request answers `status` with `body` as JSON. */
 export function mockFetch(status: number, body: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    }),
+  // A fresh Response per call: a response body can be read only once.
+  const fetchMock = vi.fn(
+    async () =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      }),
   );
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
