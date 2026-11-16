@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import { providerFutureFlags, routerFutureFlags, routes } from './routes';
@@ -51,9 +51,11 @@ describe('app routing and layout', () => {
     ['/tracker', /daily tracker/i],
     ['/chat', /ai nutritionist/i],
     ['/profile', /profile/i],
-  ])('routes %s to its page', (path, heading) => {
+  ])('routes %s to its page', async (path, heading) => {
+    if (path === '/profile') mockFetch(404, { error: { code: 'profile_not_found' } });
     renderAt(path);
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    if (path === '/profile') await waitFor(() => expect(screen.getByRole('button', { name: 'Save profile' })).toBeInTheDocument());
   });
 
   it('renders a not-found page for unknown routes', () => {
