@@ -17,5 +17,6 @@ export interface DailySummary {
   meals: { mealType: MealType; entries: MealEntry[]; subtotal: { caloriesKcal: number } }[];
 }
 
-/** Loads today's meals; the backend decides "today" in the user's time zone. */
-export const getDailySummary = () => apiFetch<DailySummary>('/daily-summary');
+/** Loads the meals of `date` (YYYY-MM-DD); without it, of today in the user's time zone. */
+export const getDailySummary = (date?: string) =>
+  apiFetch<DailySummary>(date ? `/daily-summary?date=${date}` : '/daily-summary');
