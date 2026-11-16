@@ -5,7 +5,8 @@ import { searchFoods, type Food } from '../api/foods';
 /** Searches the food database by name and lists each match with its nutrition per 100 g (US-09). */
 export function FoodSearch() {
   const [query, setQuery] = useState('');
-  const [foods, setFoods] = useState<Food[]>([]);
+  // null until the first search, so "no matches" is not shown before the user searched.
+  const [foods, setFoods] = useState<Food[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -44,8 +45,9 @@ export function FoodSearch() {
           {error}
         </p>
       )}
+      {foods?.length === 0 && <p className="muted">No foods found.</p>}
       <ul>
-        {foods.map(({ id, name, nutrition: n }) => (
+        {foods?.map(({ id, name, nutrition: n }) => (
           <li key={id}>
             {`${name}: ${n.caloriesKcal} kcal, ${n.proteinG} g protein, ${n.carbsG} g carbs, ${n.fatG} g fat per 100 g`}
           </li>
