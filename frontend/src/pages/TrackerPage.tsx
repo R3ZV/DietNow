@@ -80,7 +80,8 @@ export function TrackerPage() {
             >
               Add Food
             </button>
-            {addingTo === meal.mealType && <FoodSearch />}
+            {/* shortcut: picking does nothing yet, the next commit adds the grams form */}
+            {addingTo === meal.mealType && <FoodSearch onSelect={() => undefined} />}
           </section>
         ))}
       </div>
