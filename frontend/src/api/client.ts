@@ -22,6 +22,11 @@ export class ApiError extends Error {
   }
 }
 
+/** The text to show a user for a failed API call: the server's message, or a network hint. */
+export function errorMessage(err: unknown) {
+  return err instanceof ApiError ? err.message : 'Could not reach the server. Try again.';
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,

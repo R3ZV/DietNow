@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Credentials } from '../api/auth';
-import { ApiError } from '../api/client';
+import { errorMessage } from '../api/client';
 
 interface AuthFormProps {
   title: string;
@@ -38,7 +38,7 @@ export function AuthForm({ title, submitLabel, passwordAutoComplete, validate, s
       await submit({ email, password });
       navigate('/tracker');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach the server. Try again.');
+      setError(errorMessage(err));
       setPending(false);
     }
   }

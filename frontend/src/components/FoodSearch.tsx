@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { ApiError } from '../api/client';
+import { errorMessage } from '../api/client';
 import { searchFoods, type Food } from '../api/foods';
 
 /** Searches the food database by name and lists each match with its nutrition per 100 g (US-09). */
@@ -17,7 +17,7 @@ export function FoodSearch() {
     try {
       setFoods((await searchFoods(query)).foods);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach the server. Try again.');
+      setError(errorMessage(err));
     }
     setPending(false);
   }
