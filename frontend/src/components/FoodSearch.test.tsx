@@ -27,4 +27,19 @@ describe('food search (US-09)', () => {
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/foods?q=Chicken%20breast', expect.anything());
   });
+
+  it('says so when nothing matches', async () => {
+    mockFetch(200, { foods: [] });
+    render(<FoodSearch />);
+
+    search('xyz');
+
+    expect(await screen.findByText('No foods found.')).toBeInTheDocument();
+  });
+
+  it('shows nothing before the first search', () => {
+    render(<FoodSearch />);
+
+    expect(screen.queryByText('No foods found.')).not.toBeInTheDocument();
+  });
 });
