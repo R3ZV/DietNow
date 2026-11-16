@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
+import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -27,6 +28,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomePage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'login', element: <LoginPage /> },
       {
         path: 'tracker',
         element: (
