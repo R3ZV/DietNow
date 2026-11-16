@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { mockFetch, renderAt } from './test/helpers';
 
 describe('app routing and layout', () => {
@@ -35,6 +35,14 @@ describe('app routing and layout', () => {
   ])('routes %s to its page', (path, heading) => {
     renderAt(path);
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  });
+
+  it('links to the login and registration pages from the header (US-19)', () => {
+    renderAt('/tracker');
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
+
+    expect(nav.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(nav.getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register');
   });
 
   it('renders a not-found page for unknown routes', () => {
