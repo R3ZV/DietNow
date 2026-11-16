@@ -36,12 +36,12 @@ func (s *Service) RequireAuth(next http.Handler) http.Handler {
 		if err != nil {
 			if !errors.Is(err, ErrNoSession) {
 				log.Printf("auth: validate session: %v", err)
-				writeErr(w, http.StatusInternalServerError, "internal error")
+				writeErr(w, http.StatusInternalServerError, "internal_error", "internal server error")
 				return
 			}
 			s.ClearSessionCookie(w)
 			w.Header().Set("Cache-Control", "no-store")
-			writeErr(w, http.StatusUnauthorized, "unauthenticated")
+			writeErr(w, http.StatusUnauthorized, "unauthenticated", "authentication required")
 			return
 		}
 		w.Header().Set("Cache-Control", "no-store")
@@ -86,8 +86,10 @@ func (s *Service) ClearSessionCookie(w http.ResponseWriter) {
 	})
 }
 
-func writeErr(w http.ResponseWriter, status int, msg string) {
-	w.Header().Set("Content-Type", "application/json")
+// writeErr writes the API's standard error envelope (docs/ARCHITECTURE.md).
+// code and msg are constants, so no JSON escaping is needed.
+func writeErr(w http.ResponseWriter, status int, code, msg string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	_, _ = w.Write([]byte(`{"error":"` + msg + `"}`))
+	_, _ = w.Write([]byte(`{"error":{"code":"` + code + `","message":"` + msg + `"}}` + "\n"))
 }

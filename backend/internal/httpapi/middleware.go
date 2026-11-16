@@ -3,7 +3,7 @@ package httpapi
 import (
 	"log/slog"
 	"net/http"
-	"slices"
+	"strings"
 	"time"
 )
 
@@ -19,6 +19,7 @@ func (r *statusRecorder) WriteHeader(code int) {
 }
 
 // requestLogger logs method, path, status, and duration for every request.
+// Query strings are not logged (they may contain search terms or dates).
 func requestLogger(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -91,26 +92,64 @@ func (e *errorRewriter) Write(b []byte) (int, error) {
 	return len(b), nil // drop the plain-text body; JSON was already written
 }
 
-// cors allows the configured browser origins to call the API. With no origins
-// configured it is a no-op (same-origin only, which is the dev-proxy setup).
-func cors(allowed []string, next http.Handler) http.Handler {
-	if len(allowed) == 0 {
-		return next
+// originGuard applies CORS for the allowed origins and blocks state-changing
+// requests that come from any other origin (CSRF defence in depth, on top of
+// the SameSite=Lax session cookie). Requests without an Origin header (curl,
+// same-origin GETs, server-to-server smoke tests) pass through.
+func originGuard(origins []string, next http.Handler) http.Handler {
+	allowed := make(map[string]bool, len(origins))
+	for _, o := range origins {
+		if o = strings.TrimRight(strings.TrimSpace(o), "/"); o != "" {
+			allowed[o] = true
+		}
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin != "" && slices.Contains(allowed, origin) {
-			h := w.Header()
-			h.Set("Access-Control-Allow-Origin", origin)
-			h.Set("Access-Control-Allow-Credentials", "true")
-			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			h.Add("Vary", "Origin")
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
+		if origin == "" || origin == requestOrigin(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		w.Header().Add("Vary", "Origin")
+		if !allowed[origin] {
+			if r.Method != http.MethodGet && r.Method != http.MethodHead {
+				WriteError(w, http.StatusForbidden, "origin_not_allowed", "origin not allowed")
 				return
 			}
+			next.ServeHTTP(w, r)
+			return
 		}
+		h := w.Header()
+		h.Set("Access-Control-Allow-Origin", origin)
+		h.Set("Access-Control-Allow-Credentials", "true")
+		if r.Method == http.MethodOptions {
+			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
+			h.Set("Access-Control-Allow-Headers", "Content-Type")
+			h.Set("Access-Control-Max-Age", "600")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requestOrigin is the origin the request was addressed to. Browsers send an
+// Origin header on same-origin POSTs too; those must not be treated as
+// cross-site. Behind a TLS-terminating proxy (Render) the scheme comes from
+// X-Forwarded-Proto.
+func requestOrigin(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "no-referrer")
 		next.ServeHTTP(w, r)
 	})
 }

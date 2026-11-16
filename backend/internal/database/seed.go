@@ -31,7 +31,7 @@ func SeedDatabase(db *gorm.DB) error {
 		if err := seedProfile(tx, user.ID); err != nil {
 			return err
 		}
-		foods, err := seedGlobalFoods(tx)
+		foods, err := seedFoodCatalog(tx)
 		if err != nil {
 			return err
 		}
@@ -91,9 +91,20 @@ func seedProfile(tx *gorm.DB, userID uint) error {
 	return nil
 }
 
-// seedGlobalFoods inserts verified, longevity-relevant foods (OwnerUserID = NULL).
+// SeedFoodCatalog inserts the verified global food catalog: reference data
+// only (no users, no passwords). It is idempotent and safe for every
+// environment, including staging, where it runs right after the migrations so
+// food search has data.
+func SeedFoodCatalog(db *gorm.DB) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		_, err := seedFoodCatalog(tx)
+		return err
+	})
+}
+
+// seedFoodCatalog inserts verified, longevity-relevant foods (OwnerUserID = NULL).
 // Returns them keyed by name for use when building meal entries.
-func seedGlobalFoods(tx *gorm.DB) (map[string]models.Food, error) {
+func seedFoodCatalog(tx *gorm.DB) (map[string]models.Food, error) {
 	catalog := []models.Food{
 		{
 			Name:       "Rolled Oats",

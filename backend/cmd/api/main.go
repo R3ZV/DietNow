@@ -1,87 +1,139 @@
-// Command api runs the DietNow HTTP API.
+// Command api runs the DietNow HTTP API (and, when STATIC_DIR is set, serves
+// the built frontend from the same origin).
+//
+//	go run ./cmd/api
+//
+// It serves JSON under /api (see docs/ARCHITECTURE.md). If PostgreSQL is not
+// reachable at startup in development the server still starts, so the
+// liveness endpoint works and GET /api/health/ready reports 503. Outside
+// development an unreachable database or a failed migration is fatal, so a
+// broken release never becomes healthy and the platform keeps the old one.
 package main
 
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
+	_ "time/tzdata" // IANA zones for profile time zones, even in minimal containers
 
 	"github.com/dietnow/backend/internal/auth"
+	"github.com/dietnow/backend/internal/config"
 	"github.com/dietnow/backend/internal/database"
 	"github.com/dietnow/backend/internal/httpapi"
 )
 
+// version is overridden at build time: go build -ldflags "-X main.version=<git sha>"
+var version = "dev"
+
 func main() {
-	database.LoadDotEnv()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
-	appEnv := getenv("APP_ENV", "local")
-	production := appEnv != "local"
+	if err := run(logger); err != nil {
+		logger.Error("api exited with error", "err", err)
+		os.Exit(1)
+	}
+}
 
+func run(logger *slog.Logger) error {
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
 	dbCfg := database.ConfigFromEnv()
-	if production && (dbCfg.Password == "" || dbCfg.Password == "dietnow_dev_pw") {
-		log.Fatal("config: set a real DB_PASSWORD outside local development")
-	}
 	authCfg := auth.ConfigFromEnv()
-	if err := authCfg.Validate(production); err != nil {
-		log.Fatalf("config: %v", err)
+	if err := authCfg.Validate(cfg.Strict()); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+	if cfg.Strict() && (dbCfg.Password == "" || dbCfg.Password == "dietnow_dev_pw" || dbCfg.Password == "change-me-local-db-password") {
+		return errors.New("config: set a real DB_PASSWORD outside local development")
 	}
 
-	db, err := database.Connect(dbCfg)
-	if err != nil {
-		log.Fatalf("connect: %v", err)
-	}
-	if err := database.Migrate(db); err != nil {
-		log.Fatalf("migrate: %v", err)
-	}
-	authSvc, err := auth.NewService(db, authCfg)
-	if err != nil {
-		log.Fatal(err)
+	deps := httpapi.Deps{
+		Logger:         logger,
+		Version:        version,
+		AllowedOrigins: cfg.AllowedOrigins,
+		StaticDir:      cfg.StaticDir,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	go purgeExpiredSessions(ctx, authSvc)
+
+	db, err := database.Connect(dbCfg)
+	switch {
+	case err != nil && cfg.Strict():
+		return fmt.Errorf("connect database: %w", err)
+	case err != nil:
+		logger.Warn("database unavailable; starting without it (readiness will report 503)", "err", err)
+	default:
+		sqlDB, err := db.DB()
+		if err != nil {
+			return err
+		}
+		defer sqlDB.Close()
+
+		if cfg.AutoMigrate {
+			if err := database.Migrate(db); err != nil {
+				return fmt.Errorf("migrate: %w", err)
+			}
+			if err := database.SeedFoodCatalog(db); err != nil {
+				return fmt.Errorf("seed food catalog: %w", err)
+			}
+			logger.Info("database migrated")
+		}
+
+		authSvc, err := auth.NewService(db, authCfg)
+		if err != nil {
+			return err
+		}
+		deps.DB, deps.Auth = db, authSvc
+		go purgeExpiredSessions(ctx, logger, authSvc)
+	}
 
 	srv := &http.Server{
-		Addr: getenv("HTTP_ADDR", ":8080"),
-		Handler: httpapi.New(db, authSvc, httpapi.Options{
-			AllowedOrigins: strings.Split(getenv("ALLOWED_ORIGINS", ""), ","),
-		}),
+		Addr:              cfg.Addr(),
+		Handler:           httpapi.NewRouter(deps),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      15 * time.Second,
+		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
+	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("DietNow API (%s) listening on %s", appEnv, srv.Addr)
+		logger.Info("api listening", "addr", cfg.Addr(), "env", cfg.Env, "version", version, "static", cfg.StaticDir != "")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen: %v", err)
+			errCh <- err
 		}
+		close(errCh)
 	}()
 
-	<-ctx.Done()
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("shutdown: %v", err)
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
 	}
+
+	logger.Info("shutting down")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	defer cancel()
+	return srv.Shutdown(shutdownCtx)
 }
 
-func purgeExpiredSessions(ctx context.Context, svc *auth.Service) {
+func purgeExpiredSessions(ctx context.Context, logger *slog.Logger, svc *auth.Service) {
 	t := time.NewTicker(time.Hour)
 	defer t.Stop()
 	for {
 		if n, err := svc.DeleteExpired(ctx); err != nil && ctx.Err() == nil {
-			log.Printf("purge sessions: %v", err)
+			logger.Warn("purge sessions", "err", err)
 		} else if n > 0 {
-			log.Printf("purged %d expired sessions", n)
+			logger.Info("purged expired sessions", "count", n)
 		}
 		select {
 		case <-ctx.Done():
@@ -89,11 +141,4 @@ func purgeExpiredSessions(ctx context.Context, svc *auth.Service) {
 		case <-t.C:
 		}
 	}
-}
-
-func getenv(key, def string) string {
-	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
-		return v
-	}
-	return def
 }

@@ -17,7 +17,7 @@ dependency and callback configuration that a single-app first release does not
 need. Swapping later is contained: only `internal/auth` touches identity.
 
 Because there is no OAuth/OIDC provider, there are **no callback URLs**. The
-only origin setting is `ALLOWED_ORIGINS` (below).
+only origin setting is `API_ALLOWED_ORIGINS` (below).
 
 ## Code map
 
@@ -68,10 +68,10 @@ Unauthenticated access to a private route returns:
 
 ```
 HTTP/1.1 401 Unauthorized
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Cache-Control: no-store
 
-{"error":"unauthenticated"}
+{"error":{"code":"unauthenticated","message":"authentication required"}}
 ```
 
 A frontend should treat any `401` as "redirect to login".
@@ -80,16 +80,19 @@ A frontend should treat any `401` as "redirect to login".
 
 - Cookie is `HttpOnly` (JavaScript cannot read it), `SameSite=Lax` (not sent on
   cross-site POSTs), and `Secure` outside local dev.
-- `ALLOWED_ORIGINS` lists the exact frontend origins. Those get CORS headers
-  with `Access-Control-Allow-Credentials: true`; any **other** `Origin` is
-  refused with `403` on state-changing methods.
+- `API_ALLOWED_ORIGINS` lists the exact frontend origins. Those get CORS headers
+  with `Access-Control-Allow-Credentials: true`; any **other** cross-site
+  `Origin` is refused with `403` on state-changing methods. Same-origin
+  requests (the Vite proxy locally, the single-container staging deployment)
+  need no entry.
 - Request bodies must be `application/json` (an HTML form cannot send that
   cross-site), capped at 1 MiB.
 - Frontend calls must send credentials, e.g.
   `fetch(url, { credentials: "include", headers: {"Content-Type": "application/json"}, ... })`.
-- In staging/production put the frontend and API on the **same site**
-  (e.g. `staging.dietnow.app` + `api.staging.dietnow.app`, or one host behind a
-  reverse proxy); a `SameSite=Lax` cookie is not sent to a different site.
+- In staging the release image serves the frontend and the API from **one
+  origin** (see [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md)), so the
+  `SameSite=Lax`, `__Host-` cookie works without any cross-site setup. If the
+  frontend is ever hosted separately, keep it on the same *site* as the API.
 
 ## API
 
@@ -99,9 +102,10 @@ A frontend should treat any `401` as "redirect to login".
 | `POST /api/auth/login` `{email, password}` | – | `200 {user, expiresAt}` + cookie | `401` invalid credentials |
 | `POST /api/auth/logout`  | – | `204`, cookie cleared | – |
 | `GET /api/auth/me`       | ✔ | `200 {user, expiresAt}` | `401` |
-| `GET /api/meals?date=YYYY-MM-DD` | ✔ | `200 {date, entries}` | `400`, `401` |
-| `DELETE /api/meals/{id}` | ✔ | `204` | `401`, `404` (missing **or not yours**) |
-| `GET /api/weights?from=&to=` | ✔ | `200 {entries}` | `400`, `401` |
+
+The application endpoints (profile, foods, meals, daily summary, weights) are
+listed in [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md#endpoints). All of
+them require a session and return `404` for another user's data.
 
 ## Environment variables
 
@@ -110,19 +114,20 @@ Templates: [`.env.example`](.env.example) (local) and
 
 | Variable | Local | Staging | Notes |
 |----------|-------|---------|-------|
-| `APP_ENV` | `local` | `staging` | non-`local` turns on the strict checks below |
-| `HTTP_ADDR` | `:8080` | `:8080` | |
-| `ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:3000` | `https://<staging-frontend>` | comma-separated, exact origins |
+| `APP_ENV` | `development` | `staging` | anything but `development`/`test` turns on the strict checks below |
+| `API_PORT` / `PORT` | `8080` | `10000` (set by Render) | `PORT` wins when set |
+| `API_ALLOWED_ORIGINS` | *(empty, Vite proxy)* | *(empty, same origin)* | comma-separated, exact origins, only for a separately hosted frontend |
 | `SESSION_TTL_HOURS` | `168` | `168` | absolute lifetime |
 | `SESSION_IDLE_MINUTES` | `1440` | `1440` | inactivity timeout |
 | `SESSION_COOKIE_NAME` | `dietnow_session` | `__Host-dietnow_session` | `__Host-` makes the browser enforce Secure + host-only |
 | `COOKIE_SECURE` | `false` | `true` | must be `true` over HTTPS |
 | `COOKIE_DOMAIN` | *(empty)* | *(empty)* | keep empty = host-only cookie |
 | `BCRYPT_COST` | `12` | `12` | 10–31 outside local |
-| `DB_*` | see `.env.example` | from secret manager | `DB_SSLMODE=require` on staging |
+| `DB_*` | see `.env.example` | injected by Render from the managed database | `DB_SSLMODE=prefer` on Render's private network |
 
-With `APP_ENV` ≠ `local`, the server **refuses to start** if `COOKIE_SECURE` is
-not `true`, `BCRYPT_COST` < 10, or `DB_PASSWORD` is empty/the dev default.
+With `APP_ENV` = `staging`/`production`, the server **refuses to start** if
+`COOKIE_SECURE` is not `true`, `BCRYPT_COST` < 10, `DB_PASSWORD` is empty or a
+dev placeholder, or the database is unreachable.
 
 
 ## Running & verifying
