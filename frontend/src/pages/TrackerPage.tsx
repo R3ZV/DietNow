@@ -50,7 +50,7 @@ export function TrackerPage() {
         if (cancelled) return;
         // replace: Back from the login page must not land here and redirect again.
         if (err instanceof ApiError && err.status === 401) navigate('/login', { replace: true });
-        else setError(err instanceof Error ? err.message : String(err));
+        else setError(errorMessage(err));
       });
     return () => {
       cancelled = true;
