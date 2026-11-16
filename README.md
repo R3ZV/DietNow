@@ -33,6 +33,23 @@ codes) and the configuration conventions are documented in
 Open a **new** terminal after installing so the tools are on your `PATH`.
 Docker Desktop must be **running** (whale icon in the tray) before `docker compose up`.
 
+### Makefile shortcuts (Linux/macOS or WSL)
+
+With Go, Node.js, Docker Compose and `make` installed, run from the repository root:
+
+```bash
+make setup       # first time: preserves existing .env files and installs dependencies
+make backend     # terminal 1: starts PostgreSQL, waits for readiness, then runs the API
+make frontend    # terminal 2: starts Vite at http://localhost:5173
+```
+
+For a new database, set `DB_PASSWORD` in `backend/.env` after setup and before
+starting the backend. Keep the password unchanged for an existing database.
+Use `make seed` for optional demo data (it resets the demo profile and today's
+meal entries). Press Ctrl+C in each app terminal, then `make stop` to stop the
+database while preserving its data. Run `make help` for all available targets.
+The commands below also work without Make.
+
 ### 1. Configure
 
 ```bash
