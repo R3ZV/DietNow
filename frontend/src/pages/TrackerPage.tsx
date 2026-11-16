@@ -8,14 +8,17 @@ const mealLabels: Record<MealType, string> = {
   snack: 'Snacks',
 };
 
-/** The daily tracker (US-08): the day's four meals, each with its foods and calorie subtotal. */
+/** The daily tracker (US-08): one day's four meals, each with its foods and calorie subtotal. */
 export function TrackerPage() {
+  // Unset until the user picks a day; the backend then shows today in the user's time zone.
+  const [date, setDate] = useState<string>();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // `cancelled` drops a slow answer for a day the user has already left.
     let cancelled = false;
-    getDailySummary()
+    getDailySummary(date)
       .then((day) => !cancelled && setSummary(day))
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
@@ -23,11 +26,17 @@ export function TrackerPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [date]);
 
   return (
     <section>
       <h1>Daily Tracker</h1>
+      {summary && (
+        <label>
+          Date{' '}
+          <input type="date" value={date || summary.date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+      )}
       {error && (
         <p role="alert" className="status-error">
           {error}
