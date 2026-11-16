@@ -5,6 +5,8 @@ const navItems = [
   { to: '/tracker', label: 'Tracker', end: false },
   { to: '/chat', label: 'AI Chat', end: false },
   { to: '/profile', label: 'Profile', end: false },
+  { to: '/login', label: 'Log in', end: false },
+  { to: '/register', label: 'Create account', end: false },
 ];
 
 /** Shared page chrome: header with navigation, main content area, footer. */
