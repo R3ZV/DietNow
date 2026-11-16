@@ -35,6 +35,9 @@ export const addMealEntry = (entry: NewMealEntry) =>
     body: JSON.stringify(entry),
   });
 
+/** Removes a logged entry (US-10). */
+export const deleteMealEntry = (id: number) => apiFetch(`/meals/${id}`, { method: 'DELETE' });
+
 /** Loads the meals of `date` (YYYY-MM-DD); without it, of today in the user's time zone. */
 export const getDailySummary = (date?: string) =>
   apiFetch<DailySummary>(date ? `/daily-summary?date=${date}` : '/daily-summary');

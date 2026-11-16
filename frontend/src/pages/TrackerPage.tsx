@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiError } from '../api/client';
+import { ApiError, errorMessage } from '../api/client';
 import type { Food } from '../api/foods';
 import {
   addMealEntry,
+  deleteMealEntry,
   getDailySummary,
   type DailySummary,
   type MealType,
@@ -65,8 +66,21 @@ export function TrackerPage() {
     await addMealEntry(entry);
     setAddingTo(null);
     setPicked(null);
-    // Pin the day the entry went to, so the reload cannot jump to a new "today" after midnight.
-    setDate(entry.date);
+    reloadDay(entry.date);
+  }
+
+  async function removeEntry(id: number, day: string) {
+    try {
+      await deleteMealEntry(id);
+      reloadDay(day);
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  function reloadDay(day: string) {
+    // Pin the changed day, so the reload cannot jump to a new "today" after midnight.
+    setDate(day);
     setReloads((n) => n + 1);
   }
 
@@ -93,7 +107,14 @@ export function TrackerPage() {
                 <ul>
                   {meal.entries.map((entry) => (
                     <li key={entry.id}>
-                      {`${entry.foodName}, ${entry.portionGrams} g, ${Math.round(entry.nutrition.caloriesKcal)} kcal`}
+                      {`${entry.foodName}, ${entry.portionGrams} g, ${Math.round(entry.nutrition.caloriesKcal)} kcal`}{' '}
+                      <button
+                        type="button"
+                        aria-label={`Delete ${entry.foodName}`}
+                        onClick={() => removeEntry(entry.id, summary.date)}
+                      >
+                        Delete
+                      </button>
                     </li>
                   ))}
                 </ul>
