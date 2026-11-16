@@ -10,6 +10,7 @@ import {
   type MealType,
   type NewMealEntry,
 } from '../api/tracker';
+import { DailyDashboard } from '../components/DailyDashboard';
 import { FoodSearch } from '../components/FoodSearch';
 import { PortionForm } from '../components/PortionForm';
 
@@ -98,7 +99,7 @@ export function TrackerPage() {
             Date{' '}
             <input type="date" value={date || summary.date} onChange={(e) => setDate(e.target.value)} />
           </label>
-          <p>Total: {Math.round(summary.consumed.caloriesKcal)} kcal</p>
+          <DailyDashboard summary={summary} />
           <div className="card-grid">
             {summary.meals.map((meal) => (
               <section key={meal.mealType} aria-label={mealLabels[meal.mealType]} className="card">
