@@ -16,6 +16,7 @@ var AllModels = []any{
 	&models.Food{},
 	&models.WeightLog{},
 	&models.MealEntry{},
+	&models.Session{},
 }
 
 // Migrate creates/updates all tables, columns, indexes, foreign keys, and CHECK
