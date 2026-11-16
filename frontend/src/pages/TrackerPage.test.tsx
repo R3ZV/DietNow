@@ -113,4 +113,48 @@ describe('logging portions (US-10)', () => {
 
     expect(await screen.findByText('Total: 300 kcal')).toBeInTheDocument();
   });
+
+  it('logs 80 g of oatmeal at breakfast and updates the subtotal and the total (scenario 1)', async () => {
+    mockFetch(200, emptyDay('2026-11-16'));
+    renderPage('/tracker', <TrackerPage />);
+    const breakfast = await screen.findByRole('region', { name: 'Breakfast' });
+
+    fireEvent.click(within(breakfast).getByRole('button', { name: 'Add Food' }));
+    mockFetch(200, {
+      foods: [{ id: 1, name: 'Oatmeal', nutrition: { caloriesKcal: 375, proteinG: 13, carbsG: 68, fatG: 7 } }],
+    });
+    fireEvent.change(within(breakfast).getByLabelText('Search food'), { target: { value: 'Oatmeal' } });
+    fireEvent.click(within(breakfast).getByRole('button', { name: 'Search' }));
+    fireEvent.click(await within(breakfast).findByRole('button', { name: /^Oatmeal:/ }));
+
+    // From here on the backend answers both the POST and the reload with the updated day.
+    const fetchMock = mockFetch(200, summary('2026-11-16'));
+    fireEvent.change(within(breakfast).getByLabelText('Grams of Oatmeal'), { target: { value: '80' } });
+    fireEvent.click(within(breakfast).getByRole('button', { name: 'Add' }));
+
+    expect(await within(breakfast).findByText('Oatmeal, 80 g, 300 kcal')).toBeInTheDocument();
+    expect(within(breakfast).getByText('300 kcal')).toBeInTheDocument();
+    expect(screen.getByText('Total: 300 kcal')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/meals',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ date: '2026-11-16', mealType: 'breakfast', foodId: 1, grams: 80 }),
+      }),
+    );
+    expect(screen.queryByLabelText('Search food')).not.toBeInTheDocument();
+  });
 });
+
+/** A /api/daily-summary response with nothing logged. */
+function emptyDay(date: string) {
+  return {
+    date,
+    consumed: { caloriesKcal: 0 },
+    meals: ['breakfast', 'lunch', 'dinner', 'snack'].map((mealType) => ({
+      mealType,
+      entries: [],
+      subtotal: { caloriesKcal: 0 },
+    })),
+  };
+}
