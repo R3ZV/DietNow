@@ -52,4 +52,11 @@ describe('tracker page (US-08)', () => {
     expect(screen.getByLabelText('Date')).toHaveValue('2026-11-15');
     expect(fetchMock).toHaveBeenCalledWith('/api/daily-summary?date=2026-11-15', expect.anything());
   });
+
+  it('sends a logged-out visitor to the login page', async () => {
+    mockFetch(401, { error: { code: 'unauthenticated', message: 'authentication required' } });
+    renderPage('/tracker', <TrackerPage />);
+
+    expect(await screen.findByTestId('current-path')).toHaveTextContent('/login');
+  });
 });
