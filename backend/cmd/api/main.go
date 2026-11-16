@@ -10,14 +10,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log/slog"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
-	"github.com/dietnow/backend/internal/config"
 	"log"
 	"net/http"
 	"os"
