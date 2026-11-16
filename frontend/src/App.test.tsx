@@ -31,6 +31,7 @@ describe('app routing and layout', () => {
     ['/chat', /ai nutritionist/i],
     ['/profile', /profile/i],
     ['/register', /create account/i],
+    ['/login', /log in/i],
   ])('routes %s to its page', (path, heading) => {
     renderAt(path);
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
