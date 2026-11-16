@@ -7,6 +7,116 @@ nutrition and help users reach their physique goals (bulking, cutting, or mainte
 through streamlined tracking and real-time AI recipe generation, while also
 educating in regards to longevity foods that are missing from his / her diet.
 
+## Tech stack
+
+| Part      | Technology                                         | Folder      |
+|-----------|----------------------------------------------------|-------------|
+| Frontend  | React 18 + TypeScript + Vite, React Router         | `frontend/` |
+| Backend   | Go 1.22+ (`net/http`), GORM                        | `backend/`  |
+| Database  | PostgreSQL 16 (Docker Compose)                     | `backend/docker-compose.yml` |
+
+Why this stack, the API conventions (`/api` prefix, JSON error envelope, status
+codes) and the configuration conventions are documented in
+👉 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+
+## Getting started
+
+### Prerequisites
+
+| Tool | Version | Install (Windows) | Check |
+|------|---------|-------------------|-------|
+| Git | any | https://git-scm.com/download/win | `git --version` |
+| Go | 1.22 or newer | https://go.dev/dl/ (MSI installer) or `winget install GoLang.Go` | `go version` |
+| Node.js (includes npm) | 20 or newer (22 LTS recommended) | https://nodejs.org or `winget install OpenJS.NodeJS.LTS` | `node -v` |
+| Docker Desktop | any recent | https://www.docker.com/products/docker-desktop/ or `winget install Docker.DockerDesktop` | `docker info` |
+
+Open a **new** terminal after installing so the tools are on your `PATH`.
+Docker Desktop must be **running** (whale icon in the tray) before `docker compose up`.
+
+### 1. Configure
+
+```bash
+cp backend/.env.example backend/.env       # PowerShell: Copy-Item backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env     # PowerShell: Copy-Item frontend/.env.example frontend/.env
+```
+
+Edit `backend/.env` and set your own `DB_PASSWORD`. The `.env` files are
+git-ignored; the `.env.example` files contain placeholders only.
+
+### 2. Start the database, then the API (terminal 1)
+
+```bash
+cd backend
+docker compose up -d           # PostgreSQL on localhost:${DB_PORT}
+go run ./cmd/seed              # optional: create tables + test data
+go run ./cmd/api               # API on http://localhost:8080
+```
+
+### 3. Start the web app (terminal 2)
+
+```bash
+cd frontend
+npm ci                         # exact versions from package-lock.json
+npm run dev                    # http://localhost:5173
+```
+
+Open http://localhost:5173 — the home page shows **"API: online"** when the
+frontend can reach the backend. The dev server forwards every `/api/*` request
+to the Go API, so the browser only ever talks to one origin.
+
+Health endpoints:
+
+```bash
+curl http://localhost:8080/api/health          # liveness  -> 200 {"status":"ok",...}
+curl http://localhost:8080/api/health/ready    # readiness -> 200 if PostgreSQL is reachable, else 503
+```
+
+The API also starts when the database is down (liveness stays `200`,
+readiness returns `503`), so the frontend can be developed without Docker.
+
+### Commands
+
+| Task | Backend (`cd backend`) | Frontend (`cd frontend`) |
+|------|------------------------|--------------------------|
+| Install dependencies | `go mod download` | `npm ci` |
+| Run in development | `go run ./cmd/api` | `npm run dev` |
+| Build | `go build -o bin/api ./cmd/api` | `npm run build` (output in `dist/`) |
+| Lint / static checks | `go vet ./...` and `gofmt -l .` (must print nothing) | `npm run lint` |
+| Type check | (part of `go build` / `go vet`) | `npm run typecheck` |
+| Tests | `go test ./...` | `npm test` |
+| DB migrate / seed | `go run ./cmd/migrate` / `go run ./cmd/seed` | – |
+
+The same checks run in CI on every push and pull request
+(`.github/workflows/ci.yml`).
+
+### Configuration
+
+**`backend/.env`** (read by `docker compose` and all Go commands; real environment variables win):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `APP_ENV` | `development` | `development` or `production` |
+| `API_PORT` | `8080` | Port the API listens on |
+| `API_ALLOWED_ORIGINS` | *(empty)* | Comma-separated origins allowed for CORS; leave empty when using the Vite proxy |
+| `DB_HOST`, `DB_PORT` | `localhost`, `5432` | PostgreSQL address (Docker publishes it on `DB_PORT`) |
+| `DB_USER`, `DB_PASSWORD`, `DB_NAME` | `dietnow`, –, `dietnow` | Credentials; Docker creates the database with these |
+| `DB_SSLMODE` | `disable` | Use `require` for hosted databases |
+| `DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, `DB_CONN_MAX_LIFETIME_MIN` | `20`, `10`, `60` | Connection pool |
+| `DB_LOG_LEVEL` | `warn` | GORM logging: `silent`, `error`, `warn`, `info` |
+
+**`frontend/.env`** (only `VITE_*` variables; bundled into public JS, so never secrets):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `VITE_API_PROXY_TARGET` | `http://localhost:8080` | Where the dev server forwards `/api` |
+
+### Troubleshooting
+
+- **`go`/`npm`/`docker` is not recognized** — install it (see Prerequisites) and open a new terminal.
+- **`docker compose` fails with "cannot find the file specified … dockerDesktopLinuxEngine"** — Docker Desktop is not running; start it and wait until it says "Engine running".
+- **Readiness returns 503 / `role "dietnow" does not exist`** — another PostgreSQL (e.g. a locally installed one) is already using port 5432, so the API connects to it instead of the Docker one. Set `DB_PORT=5433` in `backend/.env`, then `docker compose up -d` again and restart the API.
+- **Port 8080 or 5173 already in use** — change `API_PORT` (and `VITE_API_PROXY_TARGET` to match), or stop the other program.
+
 ## Team
 
 - Maracine Constantin-Razvan - Product Owner
