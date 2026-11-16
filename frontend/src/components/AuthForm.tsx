@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { Credentials } from '../api/auth';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/context';
+import type { AuthResponse, Credentials } from '../api/auth';
 import { errorMessage } from '../api/client';
 
 interface AuthFormProps {
@@ -11,7 +12,7 @@ interface AuthFormProps {
   /** Returns a message to show instead of submitting, or null when the input is acceptable. */
   validate?: (credentials: Credentials) => string | null;
   /** The API call to make; it starts the session on success. */
-  submit: (credentials: Credentials) => Promise<unknown>;
+  submit: (credentials: Credentials) => Promise<AuthResponse>;
 }
 
 /**
@@ -20,6 +21,7 @@ interface AuthFormProps {
  */
 export function AuthForm({ title, submitLabel, passwordAutoComplete, validate, submit }: AuthFormProps) {
   const navigate = useNavigate();
+  const { session, setSession } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +37,15 @@ export function AuthForm({ title, submitLabel, passwordAutoComplete, validate, s
     setError(null);
     setPending(true);
     try {
-      await submit({ email, password });
+      setSession(await submit({ email, password }));
       navigate('/tracker');
     } catch (err) {
       setError(errorMessage(err));
       setPending(false);
     }
   }
+
+  if (session) return <Navigate to="/tracker" replace />;
 
   return (
     <section>

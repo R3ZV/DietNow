@@ -35,20 +35,53 @@ Docker Desktop must be **running** (whale icon in the tray) before `docker compo
 
 ### Makefile shortcuts (Linux/macOS or WSL)
 
-With Go, Node.js, Docker Compose and `make` installed, run from the repository root:
+With Go, Node.js, Docker Compose, `make`, `curl` and `unzip` installed, run from the repository root:
 
 ```bash
-make setup       # first time: preserves existing .env files and installs dependencies
+make env         # first time: create missing .env files; configure DB_PASSWORD now
+make setup       # install dependencies, download/extract USDA foods, start DB and import
 make backend     # terminal 1: starts PostgreSQL, waits for readiness, then runs the API
 make frontend    # terminal 2: starts Vite at http://localhost:5173
 ```
 
-For a new database, set `DB_PASSWORD` in `backend/.env` after setup and before
-starting the backend. Keep the password unchanged for an existing database.
+For a new database, set `DB_PASSWORD` in `backend/.env` **before `make setup`**,
+which now starts PostgreSQL. Keep the password unchanged for an existing database.
 Use `make seed` for optional demo data (it resets the demo profile and today's
 meal entries). Press Ctrl+C in each app terminal, then `make stop` to stop the
 database while preserving its data. Run `make help` for all available targets.
 The commands below also work without Make.
+
+### USDA dataset and typo-tolerant search
+
+`make setup` downloads the [USDA Foundation Foods export dated 2026-10-29](https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-10-29.zip)
+with `curl`, validates the ZIP, extracts its JSON into `dataset/`, then migrates
+and imports the foods into PostgreSQL. The current export contains 424 foods
+(about 0.7 MB zipped / 9.3 MB JSON). Downloaded files are git-ignored and reused;
+the database persists imported foods in its normal Docker volume, not in the JSON.
+
+- `make dataset`: download/extract only; no database needed.
+- `make import-dataset`: start the database and import/update by unique USDA FDC ID.
+  Safe to repeat; existing food IDs and meal references remain stable.
+- Without Make: `cd backend && go run ./cmd/import-foods -file /path/to/export.json`
+  (PostgreSQL must already be running).
+
+The importer maps per-100g nutrient values and units, prefers specific Atwater
+energy over general/legacy energy, and retains original nutrient entries in JSONB.
+Missing nutrients remain absent in the original entries, although the existing
+numeric API fields still represent missing values as zero. Negative USDA
+carbohydrate-by-difference values are clamped to zero in the tracking fields only.
+
+Food search uses PostgreSQL's `fuzzystrmatch` Levenshtein distance. Each query word
+is compared to all words in a food name; minimum distances are summed and the
+closest foods rank first. Case is ignored and literal fragments score zero.
+There is no distance cutoff: unrelated queries can still return nearest foods.
+Private-food visibility and soft deletion remain enforced. The migration enables
+`fuzzystrmatch`; hosted database administrators may need to enable it first.
+The exact-distance scan is appropriate for this small Foundation catalog; larger
+branded-food imports will need an indexed candidate-search strategy.
+
+Local downloads are not bundled into the release Docker image. To populate a
+hosted database, run the importer with that database's `DB_*` connection settings.
 
 ### 1. Configure
 

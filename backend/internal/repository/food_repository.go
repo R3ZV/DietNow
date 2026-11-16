@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"unicode"
 
 	"github.com/dietnow/backend/internal/models"
 	"gorm.io/gorm"
@@ -18,19 +19,36 @@ func NewFoodRepository(db *gorm.DB) *FoodRepository {
 }
 
 // Search returns foods the user may see — global foods plus their own private
-// ones — matching a name fragment. VisibleFoodsFor encodes the visibility rule
-// so a private food is never leaked to another user.
+// ones — ranked by minimum word edit distance, so typos still return the
+// closest matches. Each query word is compared with every name word and the
+// minimum distances are summed. Literal fragments score zero. Visibility and
+// soft deletion are applied before returning any results.
 func (r *FoodRepository) Search(ctx context.Context, userID uint, nameLike string, limit int) ([]models.Food, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 25
 	}
 	var foods []models.Food
-	err := r.db.WithContext(ctx).
-		Scopes(VisibleFoodsFor(userID)).
-		Where("name ILIKE ?", "%"+escapeLike(nameLike)+"%").
-		Order("is_verified DESC, name ASC").
-		Limit(limit).
-		Find(&foods).Error
+	query := strings.TrimSpace(nameLike)
+	db := r.db.WithContext(ctx).Model(&models.Food{}).Scopes(VisibleFoodsFor(userID))
+	if query != "" && strings.IndexFunc(query, func(r rune) bool { return unicode.IsLetter(r) || unicode.IsNumber(r) }) < 0 {
+		// Punctuation-only input has no words to compare; match it literally.
+		db = db.Where("strpos(lower(name), lower(?)) > 0", query)
+	} else if query != "" {
+		// fuzzystrmatch accepts at most 255 characters per operand. Parameterized
+		// input and literal strpos avoid interpreting SQL or LIKE wildcards.
+		db = db.Select("foods.*").Joins(`CROSS JOIN LATERAL (
+			SELECT COALESCE(SUM(best.distance), 0) AS distance
+			FROM regexp_split_to_table(lower(?), '[^[:alnum:]]+') AS q(word)
+			CROSS JOIN LATERAL (
+				SELECT MIN(CASE WHEN strpos(w.word, q.word) > 0 THEN 0
+					ELSE levenshtein(left(q.word, 255), left(w.word, 255)) END) AS distance
+				FROM regexp_split_to_table(lower(foods.name), '[^[:alnum:]]+') AS w(word)
+				WHERE w.word <> ''
+			) AS best
+			WHERE q.word <> ''
+		) AS match_score`, query).Order("match_score.distance ASC")
+	}
+	err := db.Order("is_verified DESC, name ASC, foods.id ASC").Limit(limit).Find(&foods).Error
 	return foods, err
 }
 
@@ -55,6 +73,8 @@ func (r *FoodRepository) CreatePrivate(ctx context.Context, userID uint, food *m
 	food.ID = 0
 	food.OwnerUserID = &userID
 	food.IsVerified = false // only the seed/admin path creates verified globals
+	food.FDCID = nil
+	food.USDANutrients = nil
 	return r.db.WithContext(ctx).Create(food).Error
 }
 
@@ -65,6 +85,8 @@ func (r *FoodRepository) UpdatePrivate(ctx context.Context, userID, foodID uint,
 	// Never let a caller flip ownership or verification via the update map.
 	delete(fields, "owner_user_id")
 	delete(fields, "is_verified")
+	delete(fields, "fdc_id")
+	delete(fields, "usda_nutrients")
 	delete(fields, "id")
 
 	res := r.db.WithContext(ctx).
@@ -79,12 +101,6 @@ func (r *FoodRepository) UpdatePrivate(ctx context.Context, userID, foodID uint,
 	}
 	return nil
 }
-
-// likeEscaper escapes LIKE wildcards so user input such as "100%" or "a_b"
-// matches literally. PostgreSQL's default LIKE escape character is backslash.
-var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
-
-func escapeLike(s string) string { return likeEscaper.Replace(s) }
 
 // DeletePrivate soft-deletes a food the user owns. Global foods are untouchable.
 func (r *FoodRepository) DeletePrivate(ctx context.Context, userID, foodID uint) error {

@@ -4,5 +4,8 @@
 !.env.example
 !.env.*.example
 
+# Downloaded USDA archives and extracted datasets
+/dataset/
+
 # Local tool settings
 .claude/

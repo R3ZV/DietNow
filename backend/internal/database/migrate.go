@@ -21,12 +21,15 @@ var AllModels = []any{
 
 // Migrate creates/updates all tables, columns, indexes, foreign keys, and CHECK
 // constraints directly from the Go struct definitions. This is GORM's built-in
-// migrator — no SQL scripts, no hand-written DDL. All invariants (uniqueness,
+// migrator, plus the PostgreSQL edit-distance extension. Invariants (uniqueness,
 // checks) are declared via struct tags on the models.
 //
 // AutoMigrate is additive and idempotent: it adds missing tables/columns/indexes
 // but never drops columns, so it is safe to run on every boot.
 func Migrate(db *gorm.DB) error {
+	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS fuzzystrmatch").Error; err != nil {
+		return fmt.Errorf("enable fuzzystrmatch (requires extension creation privileges): %w", err)
+	}
 	if err := db.AutoMigrate(AllModels...); err != nil {
 		return fmt.Errorf("auto-migrate: %w", err)
 	}
