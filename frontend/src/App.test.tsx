@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, within, waitFor } from '@testing-library/react';
 import { mockFetch, renderAt } from './test/helpers';
 
 describe('app routing and layout', () => {
@@ -32,9 +32,11 @@ describe('app routing and layout', () => {
     ['/profile', /profile/i],
     ['/register', /create account/i],
     ['/login', /log in/i],
-  ])('routes %s to its page', (path, heading) => {
+  ])('routes %s to its page', async (path, heading) => {
+    if (path === '/profile') mockFetch(404, { error: { code: 'profile_not_found' } });
     renderAt(path);
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    if (path === '/profile') await waitFor(() => expect(screen.getByRole('button', { name: 'Save profile' })).toBeInTheDocument());
   });
 
   it('links to the login and registration pages from the header (US-19)', () => {

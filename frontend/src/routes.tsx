@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ProfilePage } from './pages/ProfilePage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -50,10 +51,7 @@ export const routes: RouteObject[] = [
       {
         path: 'profile',
         element: (
-          <PlaceholderPage
-            title="Profile"
-            description="Your biometrics, goal and timeline, used to calculate daily targets."
-          />
+          <ProfilePage />
         ),
       },
       { path: '*', element: <NotFoundPage /> },

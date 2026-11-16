@@ -11,12 +11,14 @@ export const API_BASE = '/api';
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly fields: Record<string, string>;
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, fields: Record<string, string> = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.fields = fields;
   }
 }
 
@@ -29,8 +31,8 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   const body: unknown = await res.json().catch(() => null);
 
   if (!res.ok) {
-    const err = (body as { error?: { code?: string; message?: string } } | null)?.error;
-    throw new ApiError(res.status, err?.code ?? 'http_error', err?.message ?? res.statusText);
+    const err = (body as { error?: { code?: string; message?: string; fields?: Record<string, string> } } | null)?.error;
+    throw new ApiError(res.status, err?.code ?? 'http_error', err?.message ?? res.statusText, err?.fields);
   }
   return body as T;
 }
