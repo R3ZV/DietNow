@@ -50,6 +50,11 @@ type Food struct {
 	Name  string `gorm:"not null;size:200;index" json:"name"`
 	Brand string `gorm:"size:120" json:"brand,omitempty"`
 
+	// Stable USDA identity enables repeatable imports without duplicating foods.
+	FDCID *int64 `gorm:"uniqueIndex" json:"fdcId,omitempty"`
+	// Original nutrient entries preserve units and missing-vs-zero information.
+	USDANutrients datatypes.JSON `gorm:"type:jsonb" json:"-"`
+
 	// NULL => global/shared food. Pointer so the zero value is a real SQL NULL.
 	OwnerUserID *uint `gorm:"index" json:"ownerUserId,omitempty"`
 	Owner       *User `gorm:"foreignKey:OwnerUserID;constraint:OnDelete:CASCADE;" json:"-"`

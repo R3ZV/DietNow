@@ -159,8 +159,11 @@ func TestMVPUserDataIsolation(t *testing.T) {
 	// Bob can neither find nor log Alice's private food.
 	res, body = bob.do("GET", "/api/foods?q=Alice+secret", nil)
 	expectStatus(t, res, http.StatusOK, body)
-	if len(body["foods"].([]any)) != 0 {
-		t.Errorf("bob found alice's private food: %v", body)
+	// Fuzzy search may return other, less similar foods, but never Alice's.
+	for _, food := range body["foods"].([]any) {
+		if food.(map[string]any)["id"] == float64(private.ID) {
+			t.Errorf("bob found alice's private food: %v", body)
+		}
 	}
 	res, body = bob.do("POST", "/api/meals", map[string]any{"date": day, "mealType": "lunch", "foodId": private.ID, "grams": 100})
 	expectStatus(t, res, http.StatusNotFound, body)
@@ -187,8 +190,9 @@ func TestMVPUserDataIsolation(t *testing.T) {
 	// Alice still sees her private food.
 	res, body = alice.do("GET", "/api/foods?q=Alice+secret", nil)
 	expectStatus(t, res, http.StatusOK, body)
-	if len(body["foods"].([]any)) != 1 {
-		t.Errorf("alice cannot find her private food: %v", body)
+	foods := body["foods"].([]any)
+	if len(foods) == 0 || foods[0].(map[string]any)["id"] != float64(private.ID) {
+		t.Errorf("alice's exact private-food match is not ranked first: %v", body)
 	}
 }
 
