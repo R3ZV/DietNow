@@ -31,11 +31,27 @@ func LoadDotEnv(paths ...string) {
 				continue
 			}
 			k = strings.TrimSpace(k)
-			v = strings.Trim(strings.TrimSpace(v), `"'`)
+			v = parseValue(v)
 			if _, exists := os.LookupEnv(k); !exists {
 				os.Setenv(k, v)
 			}
 		}
 		f.Close()
 	}
+}
+
+// parseValue unquotes quoted values and strips inline comments from unquoted ones.
+func parseValue(v string) string {
+	v = strings.TrimSpace(v)
+	if len(v) >= 2 && (v[0] == '"' || v[0] == '\'') {
+		if end := strings.IndexByte(v[1:], v[0]); end >= 0 {
+			return v[1 : end+1]
+		}
+	}
+	for i := 0; i < len(v); i++ {
+		if v[i] == '#' && (i == 0 || v[i-1] == ' ' || v[i-1] == '\t') {
+			return strings.TrimSpace(v[:i])
+		}
+	}
+	return v
 }

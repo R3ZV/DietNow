@@ -18,76 +18,96 @@ import (
 	"time"
 
 	"github.com/dietnow/backend/internal/config"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/dietnow/backend/internal/auth"
 	"github.com/dietnow/backend/internal/database"
 	"github.com/dietnow/backend/internal/httpapi"
 )
 
-// version is overridden at build time: go build -ldflags "-X main.version=1.2.3"
-var version = "dev"
-
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+	database.LoadDotEnv()
 
-	if err := run(logger); err != nil {
-		logger.Error("api exited with error", "err", err)
-		os.Exit(1)
+	appEnv := getenv("APP_ENV", "local")
+	production := appEnv != "local"
+
+	dbCfg := database.ConfigFromEnv()
+	if production && (dbCfg.Password == "" || dbCfg.Password == "dietnow_dev_pw") {
+		log.Fatal("config: set a real DB_PASSWORD outside local development")
 	}
-}
+	authCfg := auth.ConfigFromEnv()
+	if err := authCfg.Validate(production); err != nil {
+		log.Fatalf("config: %v", err)
+	}
 
-func run(logger *slog.Logger) error {
-	cfg, err := config.Load()
+	db, err := database.Connect(dbCfg)
 	if err != nil {
-		return err
+		log.Fatalf("connect: %v", err)
 	}
-
-	deps := httpapi.Deps{
-		Logger:         logger,
-		Version:        version,
-		AllowedOrigins: cfg.AllowedOrigins,
+	if err := database.Migrate(db); err != nil {
+		log.Fatalf("migrate: %v", err)
 	}
-
-	db, err := database.Connect(database.ConfigFromEnv())
+	authSvc, err := auth.NewService(db, authCfg)
 	if err != nil {
-		logger.Warn("database unavailable; starting without it (readiness will report 503)", "err", err)
-	} else {
-		sqlDB, err := db.DB()
-		if err != nil {
-			return err
-		}
-		defer sqlDB.Close()
-		deps.DB = sqlDB
-	}
-
-	srv := &http.Server{
-		Addr:              cfg.Addr(),
-		Handler:           httpapi.NewRouter(deps),
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		log.Fatal(err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	go purgeExpiredSessions(ctx, authSvc)
 
-	errCh := make(chan error, 1)
-	go func() {
-		logger.Info("api listening", "addr", "http://localhost"+cfg.Addr(), "env", cfg.Env, "version", version)
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errCh <- err
-		}
-		close(errCh)
-	}()
-
-	select {
-	case err := <-errCh:
-		return err
-	case <-ctx.Done():
+	srv := &http.Server{
+		Addr: getenv("HTTP_ADDR", ":8080"),
+		Handler: httpapi.New(db, authSvc, httpapi.Options{
+			AllowedOrigins: strings.Split(getenv("ALLOWED_ORIGINS", ""), ","),
+		}),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
-	logger.Info("shutting down")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	go func() {
+		log.Printf("DietNow API (%s) listening on %s", appEnv, srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("listen: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return srv.Shutdown(shutdownCtx)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown: %v", err)
+	}
+}
+
+func purgeExpiredSessions(ctx context.Context, svc *auth.Service) {
+	t := time.NewTicker(time.Hour)
+	defer t.Stop()
+	for {
+		if n, err := svc.DeleteExpired(ctx); err != nil && ctx.Err() == nil {
+			log.Printf("purge sessions: %v", err)
+		} else if n > 0 {
+			log.Printf("purged %d expired sessions", n)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
+}
+
+func getenv(key, def string) string {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return def
 }
