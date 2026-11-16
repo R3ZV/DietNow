@@ -144,6 +144,21 @@ describe('logging portions (US-10)', () => {
     );
     expect(screen.queryByLabelText('Search food')).not.toBeInTheDocument();
   });
+
+  it('removes a logged entry and updates the totals (scenario 2)', async () => {
+    mockFetch(200, summary('2026-11-16'));
+    renderPage('/tracker', <TrackerPage />);
+    const breakfast = await screen.findByRole('region', { name: 'Breakfast' });
+
+    // The backend answers both the DELETE and the reload with the day after removal.
+    const fetchMock = mockFetch(200, emptyDay('2026-11-16'));
+    fireEvent.click(within(breakfast).getByRole('button', { name: 'Delete Oatmeal' }));
+
+    expect(await screen.findByText('Total: 0 kcal')).toBeInTheDocument();
+    expect(within(breakfast).queryByText('Oatmeal, 80 g, 300 kcal')).not.toBeInTheDocument();
+    expect(within(breakfast).getByText('0 kcal')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/meals/1', expect.objectContaining({ method: 'DELETE' }));
+  });
 });
 
 /** A /api/daily-summary response with nothing logged. */
