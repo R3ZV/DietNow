@@ -1,17 +1,6 @@
-import { vi } from 'vitest';
+import { mockFetch } from '../test/helpers';
 import { ApiError } from './client';
 import { login, register } from './auth';
-
-function mockFetch(status: number, body: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    }),
-  );
-  vi.stubGlobal('fetch', fetchMock);
-  return fetchMock;
-}
 
 const authResponse = {
   user: { id: 1, email: 'ana@example.com', displayName: '' },
